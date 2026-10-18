@@ -42,10 +42,16 @@ SUPPORTED_AUDIO_TYPES = {
 
 
 def calculate_overall_score(evaluation: GeminiEvaluation) -> Decimal:
-    return Decimal(str(evaluation.overall_score)).quantize(
-        Decimal("0.01"),
-        rounding=ROUND_HALF_UP,
+    if not evaluation.is_valid_response:
+        return Decimal("0.00")
+    weighted = (
+        Decimal("0.25") * Decimal(evaluation.accuracy_score)
+        + Decimal("0.25") * Decimal(evaluation.completeness_score)
+        + Decimal("0.20") * Decimal(evaluation.grammar_score)
+        + Decimal("0.20") * Decimal(evaluation.fluency_score)
+        + Decimal("0.10") * Decimal(evaluation.naturalness_score)
     )
+    return weighted.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
 async def save_authenticated_result(

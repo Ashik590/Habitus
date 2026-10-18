@@ -199,49 +199,590 @@ def build_evaluation_prompt(
     target_language = exercise.language.name
 
     return f"""
-You are a strict language examiner evaluating a learner's spoken {target_language} translation.
+You are a strict, impartial language examiner evaluating a learner's
+spoken {target_language} translation of a Bengali sentence.
 
-Source Bengali sentence: {exercise.bengali_text}
-CEFR level: {exercise.level}
+CORE EXAMINER PRINCIPLE:
+Evaluate the learner's actual response objectively. Do not inflate
+scores out of politeness or award grace points because the response
+is understandable.
 
-Reference translations (guidance, other valid translations are also acceptable):
+Use the full 0-100 scoring scale meaningfully. Scores must reflect
+the actual quality of the response according to the criteria below.
+
+Evaluate each scoring dimension independently. Do not allow a high
+or low score in one dimension to automatically influence another.
+
+SOURCE SENTENCE:
+{exercise.bengali_text}
+
+CEFR LEVEL:
+{exercise.level}
+
+REFERENCE TRANSLATIONS:
 {references}
+
+Reference translations are guidance, not mandatory answers.
+Other valid translations must receive appropriate scores.
 
 The learner's speech was initially transcribed by speech recognition as:
 "{transcribed_text}"
 
-EVALUATION INSTRUCTIONS:
-1. Transcript Refinement & Verification (Listen to the attached audio):
-   - The initial transcription above serves as your baseline anchor to prevent hallucinating words that were never spoken.
-   - However, listen carefully to the actual voice recording to refine or correct any minor phonetic errors made by the speech recognizer (for example, mishearing "Well" as "When", contractions like "I'm" as "I am", or dropped prepositions).
-   - In 'recognized_translation', return the EXACT, refined text of what the learner actually articulated in their voice. DO NOT hallucinate the reference translation if the learner did not say it.
 
-2. Acoustic Fluency Evaluation (Listen to the attached audio):
-   - Evaluate vocal delivery, cadence, pauses, rhythm, and speech flow from 0 to 100:
-     * 80-100: Smooth, natural pacing with few or no unnatural hesitations.
-     * 60-79: Moderate flow, occasional pauses or self-corrections.
-     * 40-59: Noticeable hesitations, broken rhythm, or halting delivery.
-     * 1-39: Extremely fragmented delivery with long struggling pauses between words.
-   - Record this score as fluency_score.
+==================================================
+1. TRANSCRIPT REFINEMENT AND VERIFICATION
+==================================================
 
-3. Linguistic & Semantic Evaluation (Evaluate the refined spoken phrase against the source & references):
-   - is_valid_response: Set to true if the response is an actual translation attempt of the source sentence in {target_language}. If it is completely off-topic, nonsense words, a refusal (e.g. "I don't care"), or unrelated, set to false.
-   - If is_valid_response is false, set all scores (accuracy_score, completeness_score, grammar_score, naturalness_score, fluency_score, overall_score) to 0.
-   - If is_valid_response is true, evaluate and score from 0 to 100:
-     * accuracy_score: How accurately it conveys the meaning of the source Bengali sentence.
-     * completeness_score: Whether all key concepts and words were translated.
-     * grammar_score: Grammatical and syntactical accuracy in {target_language}.
-     * naturalness_score: Idiomatic phrasing and natural word choice.
-     * overall_score: Weighted composite score (0 to 100) reflecting all 5 dimensions.
+Listen carefully to the attached audio recording.
 
-4. Feedback & Recommendations:
-   - feedback: Provide concise, constructive feedback in {feedback_language_name} explaining what went well and what can be improved.
-   - recommended_translations: Provide 1 to 3 best {target_language} translations.
+Use the speech recognition transcript as an initial acoustic reference,
+but independently verify the actual words spoken by the learner.
 
-Return one JSON object with exactly these fields:
-recognized_translation, is_valid_response,
+Correct minor speech-recognition errors by listening to the recording.
+Do not invent words, silently improve the learner's sentence, or
+replace the learner's response with a reference translation.
+
+In "recognized_translation", provide the actual words articulated
+by the learner in {target_language}, preserving their original meaning
+and wording as accurately as possible.
+
+Do not correct the learner's grammatical errors in this field.
+Do not replace incorrect words with the words the learner should have
+said.
+
+If the recording is unclear, use the available acoustic evidence
+and transcript conservatively rather than hallucinating speech.
+
+
+==================================================
+2. RESPONSE VALIDITY
+==================================================
+
+Determine whether the learner has made a genuine attempt to translate
+the source sentence into {target_language}.
+
+Set "is_valid_response" to true if the response constitutes a genuine
+translation attempt, even if it contains substantial semantic errors,
+missing information, grammatical errors, or incorrect vocabulary.
+
+Set it to false only if the response is completely unrelated,
+meaningless, or constitutes a refusal or a non-attempt to translate.
+
+An incorrect translation is still a valid translation attempt.
+
+If "is_valid_response" is false, set all six numerical scores to 0:
 accuracy_score, completeness_score, grammar_score, naturalness_score,
-fluency_score, overall_score, feedback, and recommended_translations.
+fluency_score, and overall_score.
+
+If true, evaluate all dimensions according to their respective rules.
+
+
+==================================================
+3. ACCURACY SCORE — SEMANTIC FIDELITY
+==================================================
+
+Definition:
+Accuracy measures how faithfully the meaning conveyed by the
+learner's complete response matches the meaning of the source sentence.
+
+Judge the meaning actually conveyed, not merely the presence of
+overlapping words or individual concepts.
+
+Evaluate the following aspects:
+
+A. Semantic fidelity:
+Determine whether the learner preserves the intended meaning of
+the source, including its central facts, relationships, actions,
+participants, objects, and circumstances.
+
+B. Lexical fidelity:
+Determine whether the chosen words and expressions represent the
+intended source concepts accurately. Penalize substitutions that
+change the intended meaning.
+
+C. Temporal and aspectual fidelity:
+Determine whether the learner preserves the temporal meaning of
+the source, including tense, aspect, habituality, continuity,
+completion, repetition, and futurity where applicable.
+
+A grammatically correct sentence can still be semantically inaccurate
+if it changes the temporal situation described by the source.
+
+D. Semantic contradictions:
+Identify whether the learner's response introduces claims that
+contradict or materially alter the meaning of the source.
+
+E. Meaning-changing additions:
+Consider whether the learner introduces additional information,
+qualifications, uncertainty, negation, or other meanings that
+materially change the original message.
+
+Do not automatically penalize every harmless addition. Evaluate
+whether the addition changes or distorts the intended meaning.
+
+SCORING GUIDELINES:
+
+95-100: The conveyed meaning faithfully preserves the source meaning,
+including its important temporal and semantic distinctions.
+
+80-94: The meaning is substantially faithful, with only minor
+semantic distortions that do not substantially alter the message.
+
+60-79: The response preserves some important meaning but contains
+a significant semantic error or alteration.
+
+30-59: The response contains substantial mistranslations or
+material changes to important aspects of the source meaning.
+
+1-29: Very little of the intended meaning is preserved, although
+the response remains a genuine translation attempt.
+
+0: No meaningful semantic correspondence exists, or the response
+is invalid under the response-validity rules.
+
+These ranges are guidance, not rigid scoring formulas. Select the
+score that best reflects the actual semantic fidelity of the response.
+
+IMPORTANT DISTINCTION:
+
+Accuracy evaluates whether the meaning conveyed is correct.
+Completeness evaluates how much of the source information is conveyed.
+
+An omitted concept should primarily reduce completeness. A concept
+that is replaced with a different meaning, distorted, or contradicted
+should reduce accuracy.
+
+When a temporal or aspectual change alters the meaning of the source,
+penalize accuracy according to the severity of that change. Do not
+automatically treat every tense difference as minor.
+
+Evaluate the intended meaning in context rather than comparing
+grammatical forms mechanically. Different grammatical constructions
+may express the same meaning, and identical grammatical tenses
+may express different meanings depending on context.
+
+
+==================================================
+4. COMPLETENESS SCORE — WEIGHTED SEMANTIC COVERAGE
+==================================================
+
+Definition:
+Completeness measures how much of the meaningful information in
+the source sentence is conveyed by the learner's response.
+
+It does not measure whether the conveyed information is correct.
+Semantic correctness belongs primarily to accuracy.
+
+STEP 1: DECOMPOSE THE SOURCE SENTENCE
+
+Independently identify its meaningful semantic units.
+
+Depending on the sentence, these may include:
+- Subject or participant
+- Action or predicate
+- Object or destination
+- Time and frequency
+- Location
+- Negation
+- Conditions
+- Modifiers
+- Relationships between concepts
+- Habitual, ongoing, completed, or other temporal information
+- Other meaningful details required to preserve the source message
+
+Do not count words mechanically. A single expression may convey
+multiple semantic units, while multiple words may convey one unit.
+
+STEP 2: DETERMINE THE IMPORTANCE OF EACH UNIT
+
+Distinguish between major and minor semantic units.
+
+Major units carry central information necessary to understand
+the intended message.
+
+Minor units contribute supplementary details or nuances whose
+absence does not substantially affect the central message.
+
+Determine importance according to the actual source sentence and
+its context. Do not assume every unit has equal importance.
+
+STEP 3: IDENTIFY THE UNITS CONVEYED
+
+Determine which source semantic units are expressed in the learner's
+response, even if they are expressed using different but valid wording.
+
+Do not require the learner to use the exact words or structure of
+the reference translations.
+
+Consider a source unit conveyed when its intended information is
+communicated, not merely when a related word appears in the response.
+
+A source concept that is completely omitted should count as missing.
+
+If the learner replaces a source concept with a different concept,
+distinguish the missing source information from the incorrect
+information introduced. Apply the appropriate accuracy and
+completeness penalties without automatically counting the same
+error twice.
+
+STEP 4: CALCULATE COMPLETENESS
+
+Estimate completeness using the proportion and relative importance
+of the source information successfully conveyed.
+
+Use this conceptual formula:
+
+Completeness Score =
+(Weighted importance of source units conveyed /
+ Total weighted importance of source units) * 100
+
+This is a conceptual scoring framework, not an instruction to count
+words or assign equal weights to every unit.
+
+Major omissions must cause substantially greater reductions than
+minor omissions.
+
+Missing a central action, participant, destination, or other essential
+unit should substantially reduce completeness when that unit is
+important to the source message.
+
+Missing a minor detail should cause a comparatively small reduction.
+
+Do not automatically assign the same completeness score to every
+response that omits one unit. Consider the importance of the omitted
+unit relative to the complete source sentence.
+
+Completeness should reflect the information actually communicated,
+not the grammatical quality, fluency, or naturalness of the response.
+
+If all meaningful source information is conveyed, completeness should
+be high even if the learner's wording is grammatically awkward.
+
+If only a small portion of the source information is conveyed,
+completeness should be low even if that portion is grammatically
+perfect.
+
+Do not force an exact numerical result from an arbitrary number of
+semantic units. Use the identified units, their importance, and the
+extent of coverage to make a consistent, evidence-based judgment.
+
+
+==================================================
+5. GRAMMAR SCORE — TARGET-LANGUAGE MORPHOSYNTAX
+==================================================
+
+Definition:
+Grammar measures the grammatical correctness of the sentence
+actually produced by the learner.
+
+Evaluate the grammatical structure according to the formal rules
+of {target_language}.
+
+Consider relevant features such as:
+- Sentence structure and word order
+- Verb conjugation and verb forms
+- Tense and aspect construction
+- Subject-verb agreement
+- Noun-adjective agreement
+- Articles and determiners
+- Preposition usage and governance
+- Pronouns and case
+- Clause structure
+- Other applicable grammatical rules
+
+Evaluate the learner's actual sentence, not the sentence they
+should have produced.
+
+Do not require the learner to follow the structure of a reference
+translation if their own construction is grammatically valid.
+
+Do not penalize grammatical correctness merely because the learner
+uses different vocabulary or phrasing from the reference translation.
+
+Distinguish grammatical errors from semantic errors.
+
+A sentence may be grammatically correct while expressing the wrong
+meaning. In such cases, grammar may remain high while accuracy
+is reduced.
+
+A sentence may also convey the intended meaning despite grammatical
+errors. In such cases, judge grammar according to the actual
+grammatical violations.
+
+Do not penalize pauses, hesitation sounds, repetitions, or momentary
+stutters as grammatical errors when the underlying construction
+is grammatically valid.
+
+These speech-delivery characteristics belong under fluency.
+
+SCORING GUIDELINES:
+
+95-100: Grammatically correct, with no meaningful grammatical errors.
+
+85-94: Strong grammatical control, with minor errors.
+
+70-84: Generally understandable structure, with noticeable errors.
+
+50-69: Multiple significant grammatical problems.
+
+25-49: Frequent grammatical errors that substantially weaken
+sentence structure.
+
+1-24: Severe grammatical problems throughout the response.
+
+0: Apply only when required by the invalid-response rules or when
+no grammatically assessable target-language response is produced.
+
+Use the full scale proportionately. Do not mechanically subtract
+a fixed number of points for every error without considering
+its severity and effect on grammatical correctness.
+
+
+==================================================
+6. NATURALNESS SCORE — IDIOMATIC AUTHENTICITY
+==================================================
+
+Definition:
+Naturalness measures how natural, idiomatic, and conventional
+the learner's translation sounds to a proficient speaker of
+{target_language} in the given context.
+
+Evaluate whether the phrasing reflects natural usage rather than
+awkward, overly literal, or unidiomatic language.
+
+Consider:
+- Idiomatic phrasing
+- Word choice and collocations
+- Natural word combinations
+- Appropriate register and tone
+- Conventional expressions
+- Natural sentence construction
+- Whether the phrasing sounds appropriate in context
+
+Accept different valid translations, including translations that
+use a different structure from the reference translations.
+
+Do not confuse naturalness with grammatical correctness.
+
+A sentence can be grammatically correct but sound unnatural,
+overly literal, or stylistically awkward.
+
+A sentence can also sound natural and fluent while conveying
+the wrong meaning.
+
+Do not automatically award a high naturalness score merely because
+a sentence is accurate, complete, or grammatically correct.
+
+Likewise, do not automatically lower naturalness because the
+translation differs from the reference translation.
+
+Evaluate naturalness independently of accuracy and completeness.
+
+SCORING GUIDELINES:
+
+90-100: Natural, idiomatic, and appropriate phrasing.
+
+80-89: Generally natural, with minor awkwardness.
+
+65-79: Understandable but noticeably awkward or stylistically unusual.
+
+40-64: Frequently unnatural, overly literal, or unidiomatic phrasing.
+
+1-39: Severely unnatural phrasing that makes the sentence difficult
+to interpret as conventional target-language usage.
+
+0: Apply only when required by the invalid-response rules or when
+no assessable target-language response is produced.
+
+
+==================================================
+7. FLUENCY SCORE — ACOUSTIC DELIVERY
+==================================================
+
+Definition:
+Fluency measures how smoothly and continuously the learner speaks.
+Evaluate it exclusively from the audio recording.
+
+Assess:
+- Speech rhythm and cadence
+- Continuity of delivery
+- Frequency and duration of pauses
+- Hesitation frequency
+- Prolonged silences
+- Repetitions and self-corrections
+- Temporal pacing
+- Overall smoothness of spoken delivery
+
+Do not evaluate fluency from the written transcript alone.
+
+Do not penalize the learner's fluency because their translation
+is inaccurate, incomplete, grammatically incorrect, or unnatural.
+
+Do not penalize accent differences by themselves, provided the
+speech delivery remains assessable.
+
+Do not confuse deliberate, natural pauses with excessive hesitation.
+Evaluate the overall pattern of speech rather than counting every
+pause as an error.
+
+SCORING GUIDELINES:
+
+85-100: Natural, continuous pacing with smooth rhythmic flow.
+
+70-84: Steady delivery with only brief or occasional hesitations.
+
+50-69: Noticeably slow, cautious, or deliberate delivery, with
+some interruptions to the flow.
+
+25-49: Halting, fragmented delivery with frequent or prolonged
+hesitations.
+
+1-24: Highly labored, word-by-word delivery with extensive
+interruptions or prolonged silences.
+
+0: Apply only when required by the invalid-response rules or when
+the audio provides no assessable speech.
+
+Base the score on the actual audio evidence, not assumptions about
+the learner's speaking ability.
+
+
+==================================================
+8. INDEPENDENCE OF SCORING DIMENSIONS
+==================================================
+
+The five dimensions evaluate different aspects of performance.
+
+Accuracy: Is the conveyed meaning faithful to the source?
+
+Completeness: How much of the source information is conveyed?
+
+Grammar: Is the learner's sentence grammatically correct?
+
+Naturalness: Does the translation sound idiomatic and natural?
+
+Fluency: How smoothly does the learner speak?
+
+Do not use one dimension as a substitute for another.
+
+In particular:
+- Do not lower grammar solely because meaning is incorrect.
+- Do not lower fluency solely because grammar is incorrect.
+- Do not lower naturalness solely because information is omitted.
+- Do not lower accuracy solely because the sentence is incomplete.
+- Do not lower completeness solely because the sentence is
+  grammatically incorrect.
+- Do not award high accuracy simply because the response contains
+  several correct words.
+- Do not award high naturalness simply because the response is
+  fluent or grammatically correct.
+
+An individual error may legitimately affect multiple dimensions
+when it independently affects them. However, avoid arbitrary
+double penalties for the same underlying problem.
+
+For example, an error that changes the source meaning belongs
+under accuracy. If that change also leaves source information
+unconveyed, completeness may be affected as well. Evaluate each
+dimension according to its own definition rather than applying
+automatic deductions across dimensions.
+
+Use independent judgment for every score.
+
+
+==================================================
+9. OVERALL SCORE
+==================================================
+
+Calculate the overall score using the following weighted formula:
+
+overall_score =
+    (0.25 * accuracy_score) +
+    (0.25 * completeness_score) +
+    (0.20 * grammar_score) +
+    (0.20 * fluency_score) +
+    (0.10 * naturalness_score)
+
+Use the numerical dimension scores in this formula.
+
+Round the final overall score to one decimal place.
+
+If "is_valid_response" is false, set overall_score to 0.
+
+
+==================================================
+10. FEEDBACK AND RECOMMENDATIONS
+==================================================
+
+FEEDBACK:
+
+Provide concise, constructive feedback in {feedback_language_name}.
+
+Identify the most important strengths and weaknesses of the learner's
+response.
+
+Mention specific errors or omissions when relevant.
+
+Explain the difference between what the learner said and what the
+source sentence intended, focusing on the most important areas
+for improvement.
+
+Make the feedback consistent with the assigned scores.
+
+Do not praise incorrect work merely to be encouraging. Be respectful,
+objective, and constructive.
+
+Avoid unnecessarily long explanations.
+
+RECOMMENDED TRANSLATIONS:
+
+Provide 1 to 3 recommended translations in {target_language}.
+
+Each recommendation must faithfully convey the source meaning and
+preserve its important semantic and temporal distinctions.
+
+Prefer natural, grammatically correct translations appropriate
+to the source sentence's CEFR level.
+
+Multiple valid translations are acceptable. Do not restrict the
+recommendations to the supplied reference translations.
+
+Do not present a translation that changes the source meaning as
+a correct recommendation.
+
+
+==================================================
+11. OUTPUT FORMAT
+==================================================
+
+Return exactly one valid JSON object with the following fields:
+
+recognized_translation
+is_valid_response
+feedback
+accuracy_score
+completeness_score
+grammar_score
+naturalness_score
+fluency_score
+overall_score
+recommended_translations
+
+Output requirements:
+
+- Return JSON only.
+- Do not include Markdown code fences.
+- Do not add explanations outside the JSON object.
+- Use a boolean for is_valid_response.
+- Use a string for feedback (articulates errors and critique before numerical scoring).
+- Use numerical values from 0 to 100 for all dimension scores.
+- Use a numerical value from 0 to 100 for overall_score.
+- Round overall_score to one decimal place.
+- Use a string for recognized_translation.
+- Use an array of strings for recommended_translations.
+- Include every required field exactly once.
+- Do not include additional fields.
+- Ensure the JSON is syntactically valid.
 """.strip()
 
 
