@@ -47,6 +47,7 @@ def transcribe_audio_locally(wav_bytes: bytes, language_code: str) -> str:
             beam_size=5,
             vad_filter=True,
             vad_parameters=dict(min_silence_duration_ms=500),
+            condition_on_previous_text=False,
         )
         text = " ".join(segment.text.strip() for segment in segments).strip()
         return text
@@ -206,20 +207,25 @@ CEFR level: {exercise.level}
 Reference translations (guidance, other valid translations are also acceptable):
 {references}
 
-The learner's speech was independently transcribed by speech recognition as:
+The learner's speech was initially transcribed by speech recognition as:
 "{transcribed_text}"
 
 EVALUATION INSTRUCTIONS:
-1. Acoustic Fluency Evaluation (Listen to the attached audio):
-   - Listen to the audio ONLY to evaluate vocal delivery, cadence, pauses, rhythm, and speech flow from 0 to 100.
+1. Transcript Refinement & Verification (Listen to the attached audio):
+   - The initial transcription above serves as your baseline anchor to prevent hallucinating words that were never spoken.
+   - However, listen carefully to the actual voice recording to refine or correct any minor phonetic errors made by the speech recognizer (for example, mishearing "Well" as "When", contractions like "I'm" as "I am", or dropped prepositions).
+   - In 'recognized_translation', return the EXACT, refined text of what the learner actually articulated in their voice. DO NOT hallucinate the reference translation if the learner did not say it.
+
+2. Acoustic Fluency Evaluation (Listen to the attached audio):
+   - Evaluate vocal delivery, cadence, pauses, rhythm, and speech flow from 0 to 100:
      * 80-100: Smooth, natural pacing with few or no unnatural hesitations.
      * 60-79: Moderate flow, occasional pauses or self-corrections.
      * 40-59: Noticeable hesitations, broken rhythm, or halting delivery.
      * 1-39: Extremely fragmented delivery with long struggling pauses between words.
    - Record this score as fluency_score.
 
-2. Linguistic & Semantic Evaluation (Evaluate the transcribed phrase against the source & references):
-   - is_valid_response: Set to true if the response is an actual translation attempt of the source sentence in {target_language}. If it is completely off-topic, nonsense words, or unrelated, set to false.
+3. Linguistic & Semantic Evaluation (Evaluate the refined spoken phrase against the source & references):
+   - is_valid_response: Set to true if the response is an actual translation attempt of the source sentence in {target_language}. If it is completely off-topic, nonsense words, a refusal (e.g. "I don't care"), or unrelated, set to false.
    - If is_valid_response is false, set all scores (accuracy_score, completeness_score, grammar_score, naturalness_score, fluency_score, overall_score) to 0.
    - If is_valid_response is true, evaluate and score from 0 to 100:
      * accuracy_score: How accurately it conveys the meaning of the source Bengali sentence.
@@ -228,7 +234,7 @@ EVALUATION INSTRUCTIONS:
      * naturalness_score: Idiomatic phrasing and natural word choice.
      * overall_score: Weighted composite score (0 to 100) reflecting all 5 dimensions.
 
-3. Feedback & Recommendations:
+4. Feedback & Recommendations:
    - feedback: Provide concise, constructive feedback in {feedback_language_name} explaining what went well and what can be improved.
    - recommended_translations: Provide 1 to 3 best {target_language} translations.
 
@@ -236,7 +242,6 @@ Return one JSON object with exactly these fields:
 recognized_translation, is_valid_response,
 accuracy_score, completeness_score, grammar_score, naturalness_score,
 fluency_score, overall_score, feedback, and recommended_translations.
-In recognized_translation, return: "{transcribed_text}".
 """.strip()
 
 
