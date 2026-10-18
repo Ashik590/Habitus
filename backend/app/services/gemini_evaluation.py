@@ -157,6 +157,7 @@ def _generate_with_fallback(
                 contents=contents,
                 config=types.GenerateContentConfig(
                     temperature=temperature,
+                    response_mime_type="application/json",
                     http_options=types.HttpOptions(
                         timeout=30_000,
                         retry_options=types.HttpRetryOptions(attempts=1),
