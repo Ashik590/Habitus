@@ -62,7 +62,7 @@ export function ProfilePage() {
           <div className="bar-chart">
             <ScoreBar label="Accuracy" score={statistics.dimension_averages.accuracy} />
             <ScoreBar label="Completeness" score={statistics.dimension_averages.completeness} />
-            <ScoreBar label="Correctness" score={statistics.dimension_averages.correctness} tone="gold" />
+            <ScoreBar label="Grammar" score={statistics.dimension_averages.grammar} tone="gold" />
             <ScoreBar label="Naturalness" score={statistics.dimension_averages.naturalness} tone="gold" />
             <ScoreBar label="Fluency" score={statistics.dimension_averages.fluency} tone="purple" />
           </div>

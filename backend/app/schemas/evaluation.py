@@ -13,7 +13,7 @@ class GeminiEvaluation(BaseModel):
     )
     accuracy_score: int = Field(ge=0, le=100)
     completeness_score: int = Field(ge=0, le=100)
-    correctness_score: int = Field(ge=0, le=100)
+    grammar_score: int = Field(ge=0, le=100)
     naturalness_score: int = Field(ge=0, le=100)
     fluency_score: int = Field(ge=0, le=100)
     overall_score: float = Field(ge=0, le=100)
@@ -27,7 +27,7 @@ class EvaluationResponse(BaseModel):
     recognized_translation: str
     accuracy_score: int
     completeness_score: int
-    correctness_score: int
+    grammar_score: int
     naturalness_score: int
     fluency_score: int
     overall_score: float

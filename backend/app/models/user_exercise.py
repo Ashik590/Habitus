@@ -19,8 +19,8 @@ class UserSpeakingExercise(Base):
             name="ck_user_speaking_exercises_completeness_score",
         ),
         CheckConstraint(
-            "correctness_score BETWEEN 0 AND 100",
-            name="ck_user_speaking_exercises_correctness_score",
+            "grammar_score BETWEEN 0 AND 100",
+            name="ck_user_speaking_exercises_grammar_score",
         ),
         CheckConstraint(
             "naturalness_score BETWEEN 0 AND 100",
@@ -48,7 +48,7 @@ class UserSpeakingExercise(Base):
 
     accuracy_score: Mapped[Decimal] = mapped_column(Numeric(5, 2))
     completeness_score: Mapped[Decimal] = mapped_column(Numeric(5, 2))
-    correctness_score: Mapped[Decimal] = mapped_column(Numeric(5, 2))
+    grammar_score: Mapped[Decimal] = mapped_column(Numeric(5, 2))
     naturalness_score: Mapped[Decimal] = mapped_column(Numeric(5, 2))
     fluency_score: Mapped[Decimal] = mapped_column(Numeric(5, 2))
     overall_score: Mapped[Decimal] = mapped_column(Numeric(5, 2))

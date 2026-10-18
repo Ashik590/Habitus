@@ -220,11 +220,11 @@ EVALUATION INSTRUCTIONS:
 
 2. Linguistic & Semantic Evaluation (Evaluate the transcribed phrase against the source & references):
    - is_valid_response: Set to true if the response is an actual translation attempt of the source sentence in {target_language}. If it is completely off-topic, nonsense words, or unrelated, set to false.
-   - If is_valid_response is false, set all scores (accuracy_score, completeness_score, correctness_score, naturalness_score, fluency_score, overall_score) to 0.
+   - If is_valid_response is false, set all scores (accuracy_score, completeness_score, grammar_score, naturalness_score, fluency_score, overall_score) to 0.
    - If is_valid_response is true, evaluate and score from 0 to 100:
      * accuracy_score: How accurately it conveys the meaning of the source Bengali sentence.
      * completeness_score: Whether all key concepts and words were translated.
-     * correctness_score: Grammatical and syntactical correctness in {target_language}.
+     * grammar_score: Grammatical and syntactical accuracy in {target_language}.
      * naturalness_score: Idiomatic phrasing and natural word choice.
      * overall_score: Weighted composite score (0 to 100) reflecting all 5 dimensions.
 
@@ -234,7 +234,7 @@ EVALUATION INSTRUCTIONS:
 
 Return one JSON object with exactly these fields:
 recognized_translation, is_valid_response,
-accuracy_score, completeness_score, correctness_score, naturalness_score,
+accuracy_score, completeness_score, grammar_score, naturalness_score,
 fluency_score, overall_score, feedback, and recommended_translations.
 In recognized_translation, return: "{transcribed_text}".
 """.strip()
@@ -277,7 +277,7 @@ def _evaluate_audio_sync(
             is_valid_response=False,
             accuracy_score=0,
             completeness_score=0,
-            correctness_score=0,
+            grammar_score=0,
             naturalness_score=0,
             fluency_score=0,
             overall_score=0,
