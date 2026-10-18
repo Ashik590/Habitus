@@ -155,7 +155,25 @@ export function AudioRecorder({ languageCode, exerciseId, timeLimitSeconds, acce
 
       {result && (
         <section className="evaluation-result" aria-live="polite">
-          <div className={`overall-score ${result.is_valid_response ? '' : 'invalid'}`}><span>{result.is_valid_response ? 'Overall score' : 'No intelligible speech detected'}</span><strong>{result.overall_score.toFixed(1)}</strong><small>{result.saved ? 'Saved to your profile' : result.is_valid_response ? 'Log in to save your progress' : 'Invalid attempts are not saved'}</small></div>
+          <div className={`overall-score ${result.is_valid_response ? '' : 'invalid'}`}>
+            <span>
+              {result.is_valid_response
+                ? 'Overall score'
+                : result.recognized_translation
+                ? 'Off-topic or invalid answer'
+                : 'No intelligible speech detected'}
+            </span>
+            <strong>{result.overall_score.toFixed(1)}</strong>
+            <small>
+              {result.saved
+                ? 'Saved to your profile'
+                : result.is_valid_response
+                ? 'Log in to save your progress'
+                : result.recognized_translation
+                ? 'Translate the assigned sentence to earn points'
+                : 'Unintelligible attempts are not saved'}
+            </small>
+          </div>
           <div className="recognized-answer">
             <span>We heard</span>
             <strong>{result.recognized_translation ? `“${result.recognized_translation}”` : 'Nothing intelligible'}</strong>
