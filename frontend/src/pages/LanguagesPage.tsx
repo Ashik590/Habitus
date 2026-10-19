@@ -18,9 +18,9 @@ export function LanguagesPage() {
   return (
     <section>
       <div className="page-intro">
-        <p className="eyebrow">Choose your target language</p>
-        <h1>What do you want to speak?</h1>
-        <p>Every language includes practical modules and CEFR-based exercises designed for Bengali-speaking learners.</p>
+        <p className="eyebrow">Languages</p>
+        <h1>Choose your target language</h1>
+        <p>Select a language to start practicing with instant feedback across CEFR levels.</p>
       </div>
       {error && <p className="status-message error">{error}</p>}
       {!error && languages.length === 0 && <p className="status-message">Loading languages…</p>}
@@ -31,7 +31,7 @@ export function LanguagesPage() {
             <div>
               <span className="language-native">{language.bengali_name}</span>
               <h2>{language.name}</h2>
-              <p>Speaking and reading practice from A1 to C1.</p>
+              <p>Interactive exercises from A1 to C1.</p>
             </div>
             <span className="card-arrow" aria-hidden="true">→</span>
           </Link>

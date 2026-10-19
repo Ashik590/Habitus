@@ -5,6 +5,11 @@ import { api } from '../lib/api'
 import type { CefrLevel, SpeakingExercise } from '../types/api'
 
 const levels: Array<CefrLevel | 'All'> = ['All', 'A1', 'A2', 'B1', 'B2', 'C1']
+const languageNames: Record<string, string> = {
+  en: 'English',
+  de: 'German',
+  es: 'Spanish',
+}
 
 export function ExercisesPage() {
   const { languageCode = 'en' } = useParams()
@@ -31,10 +36,17 @@ export function ExercisesPage() {
     setSelectedLevel(level)
   }
 
+  const currentLanguageName = languageNames[languageCode] ?? languageCode.toUpperCase()
+
   return (
     <section>
       <div className="page-heading">
-        <div><Link className="back-link" to={`/languages/${languageCode}`}>← Language overview</Link><p className="eyebrow page-kicker">Speaking module · {languageCode.toUpperCase()}</p><h1>Exercises</h1><p className="heading-copy">Choose a level and translate each Bengali prompt aloud.</p></div>
+        <div>
+          <Link className="back-link" to={`/languages/${languageCode}`}>← Language overview</Link>
+          <p className="eyebrow page-kicker">{currentLanguageName} · Speaking</p>
+          <h1>Exercises</h1>
+          <p className="heading-copy">Select a level and speak your translation aloud before the timer runs out.</p>
+        </div>
         <div className="level-filter" aria-label="Filter by CEFR level">
           {levels.map((level) => (
             <button className={level === selectedLevel ? 'active' : ''} key={level} type="button" onClick={() => selectLevel(level)}>{level}</button>
@@ -49,7 +61,7 @@ export function ExercisesPage() {
           <Link className="exercise-row" key={exercise.exercise_id} to={`/languages/${languageCode}/speaking/exercises/${exercise.exercise_id}`}>
             <span className={`level-badge level-${exercise.level.toLowerCase()}`}>{exercise.level}</span>
             <span className="exercise-title">Exercise {exercise.exercise_id}<small>{exercise.time_limit_seconds} seconds</small></span>
-            <span className="exercise-progress">{exercise.completed ? `${exercise.overall_score} score` : 'Not completed'}</span>
+            <span className="exercise-progress">{exercise.completed ? `Score: ${exercise.overall_score}` : 'Not completed'}</span>
             <span aria-hidden="true">→</span>
           </Link>
         ))}

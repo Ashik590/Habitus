@@ -5,6 +5,12 @@ import { AudioRecorder } from '../components/AudioRecorder'
 import { api } from '../lib/api'
 import type { SpeakingExercise } from '../types/api'
 
+const languageNames: Record<string, string> = {
+  en: 'English',
+  de: 'German',
+  es: 'Spanish',
+}
+
 export function ExercisePage() {
   const { languageCode = 'en', exerciseId } = useParams()
   const { accessToken } = useAuth()
@@ -21,6 +27,8 @@ export function ExercisePage() {
   if (error) return <p className="status-message error">{error}</p>
   if (!exercise) return <p className="status-message">Loading exercise…</p>
 
+  const targetLanguageName = languageNames[languageCode] ?? languageCode.toUpperCase()
+
   return (
     <section className="practice-card">
       <Link className="back-link" to={`/languages/${languageCode}/speaking/exercises`}>← All speaking exercises</Link>
@@ -29,7 +37,7 @@ export function ExercisePage() {
         <span>{exercise.time_limit_seconds} seconds</span>
         {exercise.completed && <span>Current score: {exercise.overall_score}</span>}
       </div>
-      <p className="eyebrow">Translate this sentence into spoken English</p>
+      <p className="eyebrow">Translate this sentence into spoken {targetLanguageName}</p>
       <h1 lang="bn" className="bengali-prompt">{exercise.bengali_text}</h1>
       <AudioRecorder
         languageCode={languageCode}

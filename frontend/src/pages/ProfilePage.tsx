@@ -58,7 +58,7 @@ export function ProfilePage() {
           </div>
         </article>
         <article className="chart-card dimension-chart-card">
-          <div className="chart-heading"><div><p className="eyebrow">All levels combined</p><h2>Speaking dimensions</h2></div><span className="language-pill">{selectedLanguage?.name ?? languageCode.toUpperCase()}</span></div>
+          <div className="chart-heading"><div><p className="eyebrow">All levels combined</p><h2>Speaking metrics</h2></div><span className="language-pill">{selectedLanguage?.name ?? languageCode.toUpperCase()}</span></div>
           <div className="bar-chart">
             <ScoreBar label="Accuracy" score={statistics.dimension_averages.accuracy} />
             <ScoreBar label="Completeness" score={statistics.dimension_averages.completeness} />

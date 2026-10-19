@@ -11,7 +11,7 @@ interface AudioRecorderProps {
   accessToken: string | null
 }
 
-const scoreDimensions: Array<[keyof EvaluationResponse, string]> = [
+const scoreMetrics: Array<[keyof EvaluationResponse, string]> = [
   ['accuracy_score', 'Accuracy'],
   ['completeness_score', 'Completeness'],
   ['grammar_score', 'Grammar'],
@@ -175,11 +175,11 @@ export function AudioRecorder({ languageCode, exerciseId, timeLimitSeconds, acce
             </small>
           </div>
           <div className="recognized-answer">
-            <span>We heard</span>
+            <span>Detected speech</span>
             <strong>{result.recognized_translation ? `“${result.recognized_translation}”` : 'Nothing intelligible'}</strong>
           </div>
           <div className="score-grid">
-            {scoreDimensions.map(([key, label]) => <div key={key}><span>{label}</span><strong>{result[key] as number}</strong></div>)}
+            {scoreMetrics.map(([key, label]) => <div key={key}><span>{label}</span><strong>{result[key] as number}</strong></div>)}
           </div>
           <div className="feedback-box"><h2>Feedback</h2><p>{result.feedback}</p></div>
           <div className="translations"><h2>Recommended translations</h2><ul>{result.recommended_translations.map((translation) => <li key={translation}>{translation}</li>)}</ul></div>
