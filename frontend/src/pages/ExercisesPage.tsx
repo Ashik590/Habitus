@@ -30,6 +30,8 @@ export function ExercisesPage() {
     return () => { cancelled = true }
   }, [accessToken, languageCode, selectedLevel])
 
+  const [pendingExercise, setPendingExercise] = useState<SpeakingExercise | null>(null)
+
   function selectLevel(level: CefrLevel | 'All') {
     setLoading(true)
     setError('')
@@ -45,7 +47,7 @@ export function ExercisesPage() {
           <Link className="back-link" to={`/languages/${languageCode}`}>← Language overview</Link>
           <p className="eyebrow page-kicker">{currentLanguageName} · Speaking</p>
           <h1>Exercises</h1>
-          <p className="heading-copy">Select a level and speak your translation aloud before the timer runs out.</p>
+          <p className="heading-copy">Select an exercise to test your spoken translation under calibrated time limits.</p>
         </div>
         <div className="level-filter" aria-label="Filter by CEFR level">
           {levels.map((level) => (
@@ -58,14 +60,51 @@ export function ExercisesPage() {
       {!loading && !error && exercises.length === 0 && <p className="status-message">No exercises are available at this level.</p>}
       <div className="exercise-list">
         {exercises.map((exercise) => (
-          <Link className="exercise-row" key={exercise.exercise_id} to={`/languages/${languageCode}/speaking/exercises/${exercise.exercise_id}`}>
+          <button
+            className="exercise-row exercise-row-btn"
+            key={exercise.exercise_id}
+            type="button"
+            onClick={() => setPendingExercise(exercise)}
+          >
             <span className={`level-badge level-${exercise.level.toLowerCase()}`}>{exercise.level}</span>
-            <span className="exercise-title">Exercise {exercise.exercise_id}<small>{exercise.time_limit_seconds} seconds</small></span>
+            <span className="exercise-title">Exercise #{exercise.exercise_id}<small>{exercise.time_limit_seconds} seconds limit</small></span>
             <span className="exercise-progress">{exercise.completed ? `Score: ${exercise.overall_score}` : 'Not completed'}</span>
             <span aria-hidden="true">→</span>
-          </Link>
+          </button>
         ))}
       </div>
+
+      {pendingExercise && (
+        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+          <div className="modal-card">
+            <div className="modal-header">
+              <span className={`level-badge level-${pendingExercise.level.toLowerCase()}`}>{pendingExercise.level}</span>
+              <p className="eyebrow">Timed Practice Session</p>
+            </div>
+            <h2 id="modal-title">Exercise #{pendingExercise.exercise_id}</h2>
+            <div className="modal-body">
+              <p>
+                Once you begin, the <strong>{pendingExercise.time_limit_seconds}-second countdown</strong> starts immediately.
+              </p>
+              <p className="modal-hint">
+                Formulate your translation and record your answer before the clock reaches zero. The prompt will disappear when the timer ends.
+              </p>
+            </div>
+            <div className="modal-actions">
+              <button className="button secondary" type="button" onClick={() => setPendingExercise(null)}>
+                Cancel
+              </button>
+              <Link
+                className="button"
+                to={`/languages/${languageCode}/speaking/exercises/${pendingExercise.exercise_id}`}
+                onClick={() => setPendingExercise(null)}
+              >
+                I'm Ready · Start
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }

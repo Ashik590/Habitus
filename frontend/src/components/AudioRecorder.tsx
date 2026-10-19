@@ -2,13 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { api } from '../lib/api'
 import type { EvaluationResponse } from '../types/api'
 
-type RecorderStatus = 'idle' | 'requesting' | 'recording' | 'evaluating' | 'complete'
+type RecorderStatus = 'active' | 'requesting' | 'recording' | 'evaluating' | 'complete' | 'expired'
 
 interface AudioRecorderProps {
   languageCode: string
   exerciseId: number
   timeLimitSeconds: number
   accessToken: string | null
+  onPhaseChange?: (isFinished: boolean) => void
 }
 
 const scoreMetrics: Array<[keyof EvaluationResponse, string]> = [
@@ -24,15 +25,34 @@ function chooseMimeType() {
   return candidates.find((type) => MediaRecorder.isTypeSupported(type)) ?? ''
 }
 
-export function AudioRecorder({ languageCode, exerciseId, timeLimitSeconds, accessToken }: AudioRecorderProps) {
-  const [status, setStatus] = useState<RecorderStatus>('idle')
+export function AudioRecorder({
+  languageCode,
+  exerciseId,
+  timeLimitSeconds,
+  accessToken,
+  onPhaseChange,
+}: AudioRecorderProps) {
+  const [status, setStatus] = useState<RecorderStatus>('active')
   const [remainingSeconds, setRemainingSeconds] = useState(timeLimitSeconds)
   const [feedbackLanguage, setFeedbackLanguage] = useState<'en' | 'bn'>('en')
   const [result, setResult] = useState<EvaluationResponse | null>(null)
   const [error, setError] = useState('')
+
+  const statusRef = useRef<RecorderStatus>('active')
   const recorderRef = useRef<MediaRecorder | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const intervalRef = useRef<number | null>(null)
+  const startedAtRef = useRef<number>(Date.now())
+
+  function updateStatus(newStatus: RecorderStatus) {
+    statusRef.current = newStatus
+    setStatus(newStatus)
+    if (newStatus === 'evaluating' || newStatus === 'complete' || newStatus === 'expired') {
+      onPhaseChange?.(true)
+    } else {
+      onPhaseChange?.(false)
+    }
+  }
 
   function clearTimer() {
     if (intervalRef.current !== null) {
@@ -46,8 +66,40 @@ export function AudioRecorder({ languageCode, exerciseId, timeLimitSeconds, acce
     streamRef.current = null
   }
 
+  function startSessionTimer() {
+    clearTimer()
+    startedAtRef.current = Date.now()
+    setRemainingSeconds(timeLimitSeconds)
+
+    intervalRef.current = window.setInterval(() => {
+      const elapsed = (Date.now() - startedAtRef.current) / 1000
+      const remaining = Math.max(0, Math.ceil(timeLimitSeconds - elapsed))
+      setRemainingSeconds(remaining)
+
+      if (remaining === 0) {
+        clearTimer()
+        if (statusRef.current === 'recording') {
+          stopRecording()
+        } else if (statusRef.current === 'active' || statusRef.current === 'requesting') {
+          releaseMicrophone()
+          updateStatus('expired')
+        }
+      }
+    }, 200)
+  }
+
+  useEffect(() => {
+    updateStatus('active')
+    startSessionTimer()
+    return () => {
+      clearTimer()
+      if (recorderRef.current?.state === 'recording') recorderRef.current.stop()
+      releaseMicrophone()
+    }
+  }, [exerciseId, timeLimitSeconds])
+
   async function evaluateRecording(audio: Blob) {
-    setStatus('evaluating')
+    updateStatus('evaluating')
     try {
       const evaluation = await api.evaluateExercise(
         languageCode,
@@ -57,16 +109,18 @@ export function AudioRecorder({ languageCode, exerciseId, timeLimitSeconds, acce
         accessToken,
       )
       setResult(evaluation)
-      setStatus('complete')
+      updateStatus('complete')
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Evaluation failed.')
-      setStatus('idle')
+      updateStatus('expired')
     }
   }
 
   function stopRecording() {
     clearTimer()
-    if (recorderRef.current?.state === 'recording') recorderRef.current.stop()
+    if (recorderRef.current?.state === 'recording') {
+      recorderRef.current.stop()
+    }
   }
 
   async function startRecording() {
@@ -75,10 +129,9 @@ export function AudioRecorder({ languageCode, exerciseId, timeLimitSeconds, acce
       return
     }
 
-    setStatus('requesting')
+    updateStatus('requesting')
     setError('')
     setResult(null)
-    setRemainingSeconds(timeLimitSeconds)
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -91,74 +144,122 @@ export function AudioRecorder({ languageCode, exerciseId, timeLimitSeconds, acce
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) chunks.push(event.data)
       }
+
       recorder.onstop = () => {
         const audio = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' })
         recorderRef.current = null
         releaseMicrophone()
+
         if (audio.size === 0) {
-          setError('No audio was recorded. Please try again.')
-          setStatus('idle')
+          setError('No audio was captured. Session expired.')
+          updateStatus('expired')
           return
         }
+
         void evaluateRecording(audio)
       }
 
       recorder.start(250)
-      setStatus('recording')
-      const startedAt = Date.now()
-      intervalRef.current = window.setInterval(() => {
-        const elapsedSeconds = (Date.now() - startedAt) / 1000
-        const remaining = Math.max(0, Math.ceil(timeLimitSeconds - elapsedSeconds))
-        setRemainingSeconds(remaining)
-        if (remaining === 0) stopRecording()
-      }, 250)
+      updateStatus('recording')
     } catch (recordingError) {
       releaseMicrophone()
-      setStatus('idle')
       setError(
         recordingError instanceof DOMException && recordingError.name === 'NotAllowedError'
           ? 'Microphone permission was denied.'
           : 'Could not start the microphone.',
       )
+      updateStatus('active')
     }
   }
 
-  useEffect(() => () => {
+  function handleReset() {
     clearTimer()
-    if (recorderRef.current?.state === 'recording') recorderRef.current.stop()
     releaseMicrophone()
-  }, [])
+    setError('')
+    setResult(null)
+    updateStatus('active')
+    startSessionTimer()
+  }
+
+  const isFinished = status === 'evaluating' || status === 'complete' || status === 'expired'
 
   return (
     <div className="recorder-panel">
-      <div className="recorder-toolbar">
-        <label>
-          Feedback
-          <select value={feedbackLanguage} onChange={(event) => setFeedbackLanguage(event.target.value as 'en' | 'bn')} disabled={status === 'recording' || status === 'evaluating'}>
-            <option value="en">English</option>
-            <option value="bn">বাংলা</option>
-          </select>
-        </label>
-        {status === 'recording' && <strong className="countdown">{remainingSeconds}s</strong>}
-      </div>
+      {!isFinished && (
+        <div className="countdown-banner">
+          <div className="timer-info">
+            <span className="eyebrow">Session Timer</span>
+            <p>Speak and submit your translation before time runs out.</p>
+          </div>
+          <div className={`countdown-clock ${remainingSeconds <= 5 ? 'urgent' : ''}`}>
+            <strong>{remainingSeconds}</strong>
+            <small>sec</small>
+          </div>
+        </div>
+      )}
 
-      {status === 'recording' ? (
-        <button className="record-button recording" type="button" onClick={stopRecording}><span /> Stop and evaluate</button>
-      ) : (
-        <button className="record-button" type="button" onClick={() => void startRecording()} disabled={status === 'requesting' || status === 'evaluating'}>
-          <span />{status === 'requesting' ? 'Opening microphone…' : status === 'evaluating' ? 'Evaluating your answer…' : result ? 'Record again' : 'Start recording'}
+      {!isFinished && (
+        <div className="recorder-toolbar">
+          <label>
+            Feedback Language
+            <select
+              value={feedbackLanguage}
+              onChange={(event) => setFeedbackLanguage(event.target.value as 'en' | 'bn')}
+              disabled={status === 'recording'}
+            >
+              <option value="en">English</option>
+              <option value="bn">বাংলা</option>
+            </select>
+          </label>
+        </div>
+      )}
+
+      {status === 'recording' && (
+        <button className="record-button recording" type="button" onClick={stopRecording}>
+          <span /> Finish & Submit Answer
         </button>
       )}
 
-      <p className="recorder-help">Recording stops automatically when the timer reaches zero.</p>
-      {error && <p className="form-error">{error}</p>}
+      {(status === 'active' || status === 'requesting') && (
+        <button
+          className="record-button"
+          type="button"
+          onClick={() => void startRecording()}
+          disabled={status === 'requesting'}
+        >
+          <span />
+          {status === 'requesting' ? 'Connecting microphone…' : '🎙️ Record Answer'}
+        </button>
+      )}
+
+      {status === 'evaluating' && (
+        <div className="status-message">
+          <p>Evaluating your spoken answer…</p>
+        </div>
+      )}
+
+      {status === 'expired' && !result && (
+        <div className="expired-card">
+          <div className="expired-icon" aria-hidden="true">⏱️</div>
+          <h2>Time Expired</h2>
+          <p>{error || 'The countdown reached zero before an answer was recorded.'}</p>
+          <div className="button-row">
+            <button className="button" type="button" onClick={handleReset}>
+              Try Again
+            </button>
+            <a className="button secondary" href={`/languages/${languageCode}/speaking/exercises`}>
+              Back to Exercises
+            </a>
+          </div>
+        </div>
+      )}
 
       {result && (
         <section className="evaluation-result" aria-live="polite">
           <div className={`overall-score ${result.is_valid_response ? '' : 'invalid'}`}>
             <span>
               {result.is_valid_response
-                ? 'Overall score'
+                ? 'Overall Score'
                 : result.recognized_translation
                 ? 'Off-topic or invalid answer'
                 : 'No intelligible speech detected'}
@@ -179,10 +280,33 @@ export function AudioRecorder({ languageCode, exerciseId, timeLimitSeconds, acce
             <strong>{result.recognized_translation ? `“${result.recognized_translation}”` : 'Nothing intelligible'}</strong>
           </div>
           <div className="score-grid">
-            {scoreMetrics.map(([key, label]) => <div key={key}><span>{label}</span><strong>{result[key] as number}</strong></div>)}
+            {scoreMetrics.map(([key, label]) => (
+              <div key={key}>
+                <span>{label}</span>
+                <strong>{result[key] as number}</strong>
+              </div>
+            ))}
           </div>
-          <div className="feedback-box"><h2>Feedback</h2><p>{result.feedback}</p></div>
-          <div className="translations"><h2>Recommended translations</h2><ul>{result.recommended_translations.map((translation) => <li key={translation}>{translation}</li>)}</ul></div>
+          <div className="feedback-box">
+            <h2>Feedback</h2>
+            <p>{result.feedback}</p>
+          </div>
+          <div className="translations">
+            <h2>Recommended translations</h2>
+            <ul>
+              {result.recommended_translations.map((translation) => (
+                <li key={translation}>{translation}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="button-row action-footer">
+            <button className="button" type="button" onClick={handleReset}>
+              Practice Again
+            </button>
+            <a className="button secondary" href={`/languages/${languageCode}/speaking/exercises`}>
+              All Exercises
+            </a>
+          </div>
         </section>
       )}
     </div>

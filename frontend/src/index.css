@@ -79,6 +79,7 @@ h1 { color: var(--ink); font-size: clamp(2.2rem, 5vw, 4.5rem); line-height: 1.02
 .exercise-row { display: grid; grid-template-columns: 56px 1fr auto 24px; align-items: center; gap: 18px; padding: 20px 22px; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line); }
 .exercise-row:last-child { border-bottom: 0; }
 .exercise-row:hover { background: #f9fbf8; }
+.exercise-row-btn { width: 100%; border: 0; background: transparent; font: inherit; text-align: left; cursor: pointer; }
 .exercise-title { display: flex; flex-direction: column; font-weight: 760; }
 .exercise-title small, .exercise-progress { color: var(--muted); font-weight: 500; }
 .level-badge { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 30px; border-radius: 8px; font-size: .78rem; font-weight: 850; background: var(--green-soft); color: var(--green-dark); }
@@ -87,9 +88,34 @@ h1 { color: var(--ink); font-size: clamp(2.2rem, 5vw, 4.5rem); line-height: 1.02
 .status-message { padding: 22px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--muted); }
 .status-message.error, .form-error { color: var(--danger); background: #fff0f0; }
 .practice-card { max-width: 900px; margin: 0 auto; padding: 42px; border: 1px solid var(--line); border-radius: 22px; background: var(--surface); box-shadow: var(--shadow); }
+.practice-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
+.practice-card-top .practice-meta { margin: 0; }
+.finished-header { margin-bottom: 32px; }
+.finished-header h1 { font-size: 2.2rem; margin: 6px 0 0; }
 .back-link { color: var(--green); font-weight: 700; text-decoration: none; }
-.practice-meta { display: flex; align-items: center; gap: 16px; color: var(--muted); margin: 34px 0 54px; }
+.practice-meta { display: flex; align-items: center; gap: 16px; color: var(--muted); }
 .bengali-prompt { font-family: "Noto Sans Bengali", Inter, sans-serif; font-size: clamp(2rem, 6vw, 4rem); line-height: 1.35; letter-spacing: -.02em; }
+.countdown-banner { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; margin-bottom: 24px; border: 1px solid var(--line); border-radius: 16px; background: linear-gradient(135deg, #fff, var(--green-soft)); }
+.timer-info p { margin: 4px 0 0; color: var(--muted); font-size: .92rem; }
+.countdown-clock { display: flex; align-items: baseline; gap: 4px; padding: 8px 16px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.countdown-clock strong { font-size: 2rem; color: var(--green-dark); line-height: 1; }
+.countdown-clock small { color: var(--muted); font-weight: 700; text-transform: uppercase; font-size: .75rem; }
+.countdown-clock.urgent { border-color: var(--danger); background: #fff0f0; }
+.countdown-clock.urgent strong { color: var(--danger); animation: recording-pulse 1s infinite; }
+.expired-card { padding: 36px 24px; text-align: center; border: 1px dashed var(--line); border-radius: 18px; background: #fafafa; margin: 24px 0; }
+.expired-icon { font-size: 3rem; margin-bottom: 12px; }
+.expired-card h2 { margin: 0 0 8px; color: var(--ink); }
+.expired-card p { color: var(--muted); margin-bottom: 20px; }
+.expired-card .button-row, .action-footer { justify-content: center; margin-top: 24px; }
+.modal-backdrop { position: fixed; inset: 0; background: rgba(18, 25, 22, 0.55); backdrop-filter: blur(5px); display: grid; place-items: center; z-index: 100; padding: 20px; }
+.modal-card { width: min(480px, 100%); background: var(--surface); border-radius: 20px; padding: 34px; box-shadow: 0 24px 60px rgba(0,0,0,0.22); border: 1px solid var(--line); animation: modal-in .2s ease-out; }
+.modal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.modal-header .eyebrow { margin: 0; }
+.modal-card h2 { margin: 0 0 16px; font-size: 1.8rem; }
+.modal-body p { color: var(--muted); line-height: 1.6; margin: 0 0 12px; }
+.modal-hint { font-size: .9rem; background: var(--green-soft); padding: 12px 14px; border-radius: 10px; color: var(--green-dark) !important; font-weight: 550; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 28px; }
+@keyframes modal-in { from { opacity: 0; transform: scale(.95); } to { opacity: 1; transform: scale(1); } }
 .recorder-placeholder { display: flex; align-items: center; gap: 18px; padding: 20px; margin-top: 42px; border-radius: 14px; background: var(--green-soft); }
 .recorder-placeholder p { margin: 5px 0 0; color: var(--muted); }
 .microphone { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; color: white; background: var(--green); }

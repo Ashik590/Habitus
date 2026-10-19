@@ -16,9 +16,11 @@ export function ExercisePage() {
   const { accessToken } = useAuth()
   const [exercise, setExercise] = useState<SpeakingExercise | null>(null)
   const [error, setError] = useState('')
+  const [isFinished, setIsFinished] = useState(false)
 
   useEffect(() => {
     if (!exerciseId) return
+    setIsFinished(false)
     api.getExercise(languageCode, exerciseId, accessToken).then(setExercise).catch((requestError: unknown) => {
       setError(requestError instanceof Error ? requestError.message : 'Could not load this exercise.')
     })
@@ -31,19 +33,33 @@ export function ExercisePage() {
 
   return (
     <section className="practice-card">
-      <Link className="back-link" to={`/languages/${languageCode}/speaking/exercises`}>← All speaking exercises</Link>
-      <div className="practice-meta">
-        <span className={`level-badge level-${exercise.level.toLowerCase()}`}>{exercise.level}</span>
-        <span>{exercise.time_limit_seconds} seconds</span>
-        {exercise.completed && <span>Current score: {exercise.overall_score}</span>}
+      <div className="practice-card-top">
+        <Link className="back-link" to={`/languages/${languageCode}/speaking/exercises`}>← All speaking exercises</Link>
+        <div className="practice-meta">
+          <span className={`level-badge level-${exercise.level.toLowerCase()}`}>{exercise.level}</span>
+          <span>{exercise.time_limit_seconds}s limit</span>
+          {exercise.completed && <span>Previous score: {exercise.overall_score}</span>}
+        </div>
       </div>
-      <p className="eyebrow">Translate this sentence into spoken {targetLanguageName}</p>
-      <h1 lang="bn" className="bengali-prompt">{exercise.bengali_text}</h1>
+
+      {!isFinished ? (
+        <div className="active-prompt-area">
+          <p className="eyebrow">Translate this sentence into spoken {targetLanguageName}</p>
+          <h1 lang="bn" className="bengali-prompt">{exercise.bengali_text}</h1>
+        </div>
+      ) : (
+        <div className="finished-header">
+          <p className="eyebrow">Session Ended</p>
+          <h1>Evaluation & Results</h1>
+        </div>
+      )}
+
       <AudioRecorder
         languageCode={languageCode}
         exerciseId={exercise.exercise_id}
         timeLimitSeconds={exercise.time_limit_seconds}
         accessToken={accessToken}
+        onPhaseChange={setIsFinished}
       />
     </section>
   )
