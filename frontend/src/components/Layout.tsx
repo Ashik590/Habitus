@@ -24,7 +24,7 @@ function HabitusLogo() {
 }
 
 export function Layout() {
-  const { user, logout } = useAuth()
+  const { user, logout, isInitializing } = useAuth()
   return (
     <div className="app-shell">
       <header className="site-header">
@@ -34,7 +34,7 @@ export function Layout() {
         </NavLink>
         <nav aria-label="Main navigation">
           <NavLink to="/languages">Languages</NavLink>
-          {user ? (
+          {isInitializing ? null : user ? (
             <><NavLink to="/profile">Dashboard</NavLink><button className="link-button" type="button" onClick={logout}>Log out</button></>
           ) : (
             <><NavLink to="/login">Log in</NavLink><NavLink className="button small" to="/register">Create account</NavLink></>

@@ -40,6 +40,9 @@ export const api = {
   login: (email: string, password: string) => request<TokenPair>('/auth/login', {
     method: 'POST', body: JSON.stringify({ email, password }),
   }),
+  refreshToken: (refreshToken: string) => request<TokenPair>('/auth/refresh', {
+    method: 'POST', body: JSON.stringify({ refresh_token: refreshToken }),
+  }),
   getCurrentUser: (token: string) => request<User>('/users/me', {}, token),
   getExercises: (languageCode: string, token?: string | null, level?: CefrLevel) => request<SpeakingExerciseListResponse>(
     `/languages/${languageCode}/speaking/exercises${level ? `?level=${level}` : ''}`, {}, token,
