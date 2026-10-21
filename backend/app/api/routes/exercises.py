@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, select
+from sqlalchemy import func, literal, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.auth import get_optional_current_user
@@ -40,38 +40,45 @@ async def list_exercises(
     if level is not None:
         filters.append(SpeakingExercise.level == level)
 
-    total = await session.scalar(
-        select(func.count(SpeakingExercise.exercise_id))
-        .join(Language)
-        .where(*filters)
-    )
-    exercise_rows = await session.scalars(
-        select(SpeakingExercise)
+    score_col = (
+        UserSpeakingExercise.overall_score
+        if current_user is not None
+        else literal(None)
+    ).label("overall_score")
+
+    query = (
+        select(
+            SpeakingExercise,
+            score_col,
+            func.count().over().label("total_count"),
+        )
         .join(Language)
         .where(*filters)
         .order_by(SpeakingExercise.exercise_id)
         .limit(limit)
         .offset(offset)
     )
-    exercises = list(exercise_rows)
 
-    scores_by_exercise_id: dict[int, float] = {}
-    if current_user is not None and exercises:
-        score_rows = await session.execute(
-            select(
-                UserSpeakingExercise.exercise_id,
-                UserSpeakingExercise.overall_score,
-            ).where(
-                UserSpeakingExercise.user_id == current_user.user_id,
-                UserSpeakingExercise.exercise_id.in_(
-                    exercise.exercise_id for exercise in exercises
-                ),
-            )
+    if current_user is not None:
+        query = query.outerjoin(
+            UserSpeakingExercise,
+            (UserSpeakingExercise.exercise_id == SpeakingExercise.exercise_id)
+            & (UserSpeakingExercise.user_id == current_user.user_id),
         )
-        scores_by_exercise_id = {
-            exercise_id: float(overall_score)
-            for exercise_id, overall_score in score_rows.all()
-        }
+
+    rows = (await session.execute(query)).all()
+
+    if not rows and offset > 0:
+        total = (
+            await session.scalar(
+                select(func.count(SpeakingExercise.exercise_id))
+                .join(Language)
+                .where(*filters)
+            )
+            or 0
+        )
+    else:
+        total = rows[0].total_count if rows else 0
 
     items = [
         SpeakingExercisePublic(
@@ -79,15 +86,15 @@ async def list_exercises(
             level=exercise.level,
             bengali_text=exercise.bengali_text,
             time_limit_seconds=exercise.time_limit_seconds,
-            completed=exercise.exercise_id in scores_by_exercise_id,
-            overall_score=scores_by_exercise_id.get(exercise.exercise_id),
+            completed=overall_score is not None,
+            overall_score=float(overall_score) if overall_score is not None else None,
         )
-        for exercise in exercises
+        for exercise, overall_score, _ in rows
     ]
 
     return SpeakingExerciseListResponse(
         items=items,
-        total=total or 0,
+        total=total,
         limit=limit,
         offset=offset,
     )

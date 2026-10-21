@@ -13,14 +13,17 @@ const languageNames: Record<string, string> = {
 
 export function ExercisesPage() {
   const { languageCode = 'en' } = useParams()
-  const { accessToken } = useAuth()
+  const { accessToken, isInitializing } = useAuth()
   const [selectedLevel, setSelectedLevel] = useState<CefrLevel | 'All'>('All')
   const [exercises, setExercises] = useState<SpeakingExercise[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
+    if (isInitializing) return
+
     let cancelled = false
+    setLoading(true)
     api.getExercises(languageCode, accessToken, selectedLevel === 'All' ? undefined : selectedLevel)
       .then((response) => { if (!cancelled) setExercises(response.items) })
       .catch((requestError: unknown) => {
@@ -28,7 +31,7 @@ export function ExercisesPage() {
       })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
-  }, [accessToken, languageCode, selectedLevel])
+  }, [accessToken, isInitializing, languageCode, selectedLevel])
 
   const [pendingExercise, setPendingExercise] = useState<SpeakingExercise | null>(null)
 

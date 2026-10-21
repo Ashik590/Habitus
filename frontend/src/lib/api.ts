@@ -31,9 +31,28 @@ async function request<T>(path: string, options: RequestInit = {}, accessToken?:
   return response.json() as Promise<T>
 }
 
+let cachedLanguages: Promise<Language[]> | null = null
+let cachedModules: Promise<LearningModule[]> | null = null
+
 export const api = {
-  getLanguages: () => request<Language[]>('/languages'),
-  getModules: () => request<LearningModule[]>('/modules'),
+  getLanguages: () => {
+    if (!cachedLanguages) {
+      cachedLanguages = request<Language[]>('/languages').catch((err) => {
+        cachedLanguages = null
+        throw err
+      })
+    }
+    return cachedLanguages
+  },
+  getModules: () => {
+    if (!cachedModules) {
+      cachedModules = request<LearningModule[]>('/modules').catch((err) => {
+        cachedModules = null
+        throw err
+      })
+    }
+    return cachedModules
+  },
   register: (name: string, email: string, password: string) => request<User>('/auth/register', {
     method: 'POST', body: JSON.stringify({ name, email, password }),
   }),
