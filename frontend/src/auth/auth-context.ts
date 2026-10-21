@@ -4,6 +4,7 @@ import type { User } from '../types/api'
 export interface AuthContextValue {
   accessToken: string | null
   user: User | null
+  isAuthenticated: boolean
   isInitializing: boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => void

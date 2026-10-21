@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom'
+import { useAuth } from '../auth/useAuth'
 
 export function HomePage() {
+  const { isAuthenticated } = useAuth()
+
   return (
     <section className="hero-section">
       <p className="eyebrow">Make language your second nature</p>
@@ -8,7 +11,11 @@ export function HomePage() {
       <p className="hero-copy">Practice through guided exercises, instant feedback, and clear CEFR-level progress.</p>
       <div className="button-row">
         <Link className="button" to="/languages">Choose a language</Link>
-        <Link className="button secondary" to="/register">Create account</Link>
+        {isAuthenticated ? (
+          <Link className="button secondary" to="/profile">Dashboard</Link>
+        ) : (
+          <Link className="button secondary" to="/register">Create account</Link>
+        )}
       </div>
       <div className="feature-grid">
         <article><strong>Multiple</strong><span>languages to explore</span></article>
