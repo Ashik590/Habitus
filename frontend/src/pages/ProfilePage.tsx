@@ -101,7 +101,7 @@ export function ProfilePage() {
                                 label={level.level}
                                 score={level.current_score}
                                 detail={`${level.exercises_completed} of ${level.exercises_available} completed`}
-                                tone={index >= 4 ? 'purple' : index >= 2 ? 'gold' : 'green'}
+                                tone={index >= 4 ? 'purple' : index >= 2 ? 'gold' : 'rose'}
                               />
                             ))}
                           </div>

@@ -2,10 +2,10 @@ interface ScoreBarProps {
   label: string
   score: number | null
   detail?: string
-  tone?: 'green' | 'gold' | 'purple'
+  tone?: 'rose' | 'green' | 'gold' | 'purple'
 }
 
-export function ScoreBar({ label, score, detail, tone = 'green' }: ScoreBarProps) {
+export function ScoreBar({ label, score, detail, tone = 'rose' }: ScoreBarProps) {
   const safeScore = score === null ? 0 : Math.min(100, Math.max(0, score))
 
   return (
