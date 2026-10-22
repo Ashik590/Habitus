@@ -64,15 +64,24 @@ export function ExercisesPage() {
       <div className="exercise-list">
         {exercises.map((exercise) => (
           <button
-            className="exercise-row exercise-row-btn"
+            className={`exercise-row exercise-row-btn ${exercise.completed ? 'completed' : ''}`}
             key={exercise.exercise_id}
             type="button"
             onClick={() => setPendingExercise(exercise)}
           >
             <span className={`level-badge level-${exercise.level.toLowerCase()}`}>{exercise.level}</span>
-            <span className="exercise-title">Exercise #{exercise.exercise_id}<small>{exercise.time_limit_seconds} seconds limit</small></span>
-            <span className="exercise-progress">{exercise.completed ? `Score: ${exercise.overall_score}` : 'Not completed'}</span>
-            <span aria-hidden="true">→</span>
+            <span className="exercise-title">
+              Exercise #{exercise.exercise_id}
+              <small>{exercise.time_limit_seconds}s limit</small>
+            </span>
+            {exercise.completed ? (
+              <span className="exercise-progress completed-badge">
+                ✓ {exercise.overall_score}%
+              </span>
+            ) : (
+              <span className="exercise-progress">Not started</span>
+            )}
+            <span className="row-arrow" aria-hidden="true">→</span>
           </button>
         ))}
       </div>
