@@ -1,7 +1,10 @@
 import asyncio
+from enum import Enum
 from functools import lru_cache
 import io
 import logging
+import threading
+import time
 import wave
 
 from faster_whisper import WhisperModel
@@ -134,26 +137,95 @@ def _normalize_audio(
     return destination.getvalue(), "audio/wav", "wav"
 
 
-def _generate_with_fallback(
-    client: genai.Client,
+class KeyState(str, Enum):
+    AVAILABLE = "AVAILABLE"
+    MINUTE_COOLDOWN = "MINUTE_COOLDOWN"
+    DAILY_COOLDOWN = "DAILY_COOLDOWN"
+
+
+class GeminiKeyPool:
+    """Manages multi-key quota failover with pure state transitions: AVAILABLE, MINUTE_COOLDOWN, DAILY_COOLDOWN."""
+
+    def __init__(self) -> None:
+        self._states: dict[str, KeyState] = {}
+        self._cooldown_until: dict[str, float] = {}
+        self._lock = threading.Lock()
+
+    def get_candidate_keys(self, all_keys: list[str]) -> list[str]:
+        now = time.time()
+        with self._lock:
+            candidates: list[str] = []
+            for key in all_keys:
+                state = self._states.get(key, KeyState.AVAILABLE)
+                cooldown = self._cooldown_until.get(key, 0.0)
+
+                if state == KeyState.AVAILABLE:
+                    candidates.append(key)
+                elif state == KeyState.MINUTE_COOLDOWN:
+                    if now >= cooldown:
+                        # 60s cooldown passed! Ready to be tested with the real request
+                        candidates.append(key)
+                    # If not passed: bypassed in 0ms!
+                elif state == KeyState.DAILY_COOLDOWN:
+                    if now >= cooldown:
+                        # Day break passed! Reset to AVAILABLE
+                        self._states[key] = KeyState.AVAILABLE
+                        candidates.append(key)
+                    # If not passed: bypassed in 0ms!
+
+            # If all keys are currently cooling down, return all_keys as fallback
+            return candidates if candidates else all_keys
+
+    def mark_success(self, key: str) -> None:
+        with self._lock:
+            self._states[key] = KeyState.AVAILABLE
+            self._cooldown_until.pop(key, None)
+
+    def mark_failure_429(self, key: str, is_daily_keyword: bool) -> None:
+        now = time.time()
+        with self._lock:
+            current_state = self._states.get(key, KeyState.AVAILABLE)
+            masked = f"...{key[-4:]}" if len(key) >= 4 else "..."
+
+            # If explicit "per day", OR if key was ALREADY in MINUTE_COOLDOWN and failed again
+            if is_daily_keyword or current_state == KeyState.MINUTE_COOLDOWN:
+                self._states[key] = KeyState.DAILY_COOLDOWN
+                self._cooldown_until[key] = now + (12 * 3600)  # 12-hour day break
+                logger.error(
+                    "Gemini key %s moved to DAILY_COOLDOWN (paused for 12 hours).",
+                    masked,
+                )
+            else:
+                # First 429 without explicit daily keyword: move to MINUTE_COOLDOWN for 60s
+                self._states[key] = KeyState.MINUTE_COOLDOWN
+                self._cooldown_until[key] = now + 60.0  # 60 seconds
+                logger.warning(
+                    "Gemini key %s moved to MINUTE_COOLDOWN (paused for 60s).",
+                    masked,
+                )
+
+
+_key_pool = GeminiKeyPool()
+
+
+def _generate_with_key_pool(
     contents: list[object] | object,
     temperature: float = 0.0,
 ):
-    model_names = [
-        settings.gemini_model,
-        *(
-            model.strip()
-            for model in settings.gemini_fallback_models.split(",")
-            if model.strip()
-        ),
-    ]
-    model_names = list(dict.fromkeys(model_names))
+    all_keys = settings.all_gemini_api_keys
+    if not all_keys:
+        raise EvaluationServiceError("No Gemini API key is configured.")
 
+    candidate_keys = _key_pool.get_candidate_keys(all_keys)
     last_error: Exception | None = None
-    for model_name in model_names:
+
+    for key_idx, api_key in enumerate(candidate_keys, start=1):
+        masked_key = f"...{api_key[-4:]}" if len(api_key) >= 4 else "..."
+        client = genai.Client(api_key=api_key)
+
         try:
-            return client.models.generate_content(
-                model=model_name,
+            response = client.models.generate_content(
+                model=settings.gemini_model,
                 contents=contents,
                 config=types.GenerateContentConfig(
                     temperature=temperature,
@@ -164,19 +236,41 @@ def _generate_with_fallback(
                     ),
                 ),
             )
+            # Success: mark state AVAILABLE
+            _key_pool.mark_success(api_key)
+            logger.info(
+                "Gemini evaluation succeeded using API key %s (candidate #%d) with model %s",
+                masked_key,
+                key_idx,
+                settings.gemini_model,
+            )
+            return response
+
         except (errors.ServerError, errors.ClientError) as exc:
             last_error = exc
-            if exc.code not in {404, 429, 500, 502, 503, 504}:
-                raise
-            logger.warning(
-                "Gemini model %s encountered error %s; trying fallback model",
-                model_name,
-                exc.code,
-            )
+            if exc.code == 429:
+                error_text = str(exc).lower()
+                is_daily = (
+                    "per day" in error_text
+                    or "per_day" in error_text
+                    or "daily" in error_text
+                )
+                _key_pool.mark_failure_429(api_key, is_daily_keyword=is_daily)
+                continue  # Jump to NEXT KEY immediately!
+            else:
+                logger.warning(
+                    "Gemini API key %s with model %s encountered error %s; trying next key if available",
+                    masked_key,
+                    settings.gemini_model,
+                    exc.code,
+                )
+                continue
 
     if last_error is not None:
-        raise last_error
-    raise EvaluationServiceError("No Gemini evaluation model is configured.")
+        raise EvaluationServiceError(
+            "Evaluation capacity is temporarily resting across all keys. Please try again shortly."
+        )
+    raise EvaluationServiceError("No Gemini evaluation key or model is configured.")
 
 
 def _clean_transcription(text: str) -> str:
@@ -793,10 +887,9 @@ def _evaluate_audio_sync(
     mime_type: str,
     feedback_language: FeedbackLanguage,
 ) -> GeminiEvaluation:
-    if not settings.gemini_api_key:
-        raise EvaluationServiceError("Gemini API key is not configured.")
+    if not settings.all_gemini_api_keys:
+        raise EvaluationServiceError("No Gemini API key is configured.")
 
-    client = genai.Client(api_key=settings.gemini_api_key)
     normalized_bytes, normalized_mime_type, _ = _normalize_audio(
         audio_bytes,
         mime_type,
@@ -846,8 +939,7 @@ def _evaluate_audio_sync(
         cleaned_transcript,
         feedback_language,
     )
-    evaluation_response = _generate_with_fallback(
-        client,
+    evaluation_response = _generate_with_key_pool(
         contents=[audio_part, evaluation_prompt],
         temperature=0.0,
     )

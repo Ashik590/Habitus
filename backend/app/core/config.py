@@ -16,8 +16,10 @@ class Settings(BaseSettings):
     refresh_token_expire_days: int = 7
 
     gemini_api_key: str | None = None
-    gemini_model: str = "gemini-3.8-flash"
-    gemini_fallback_models: str = "gemini-3.6-flash"
+    gemini_api_key_2: str | None = None
+    gemini_api_key_3: str | None = None
+    gemini_api_keys: str | None = None
+    gemini_model: str = "gemini-2.5-flash"
 
     whisper_model: str = "tiny"
 
@@ -26,6 +28,16 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    @property
+    def all_gemini_api_keys(self) -> list[str]:
+        keys: list[str] = []
+        if self.gemini_api_keys:
+            keys.extend(k.strip() for k in self.gemini_api_keys.split(",") if k.strip())
+        for key in (self.gemini_api_key, self.gemini_api_key_2, self.gemini_api_key_3):
+            if key and key.strip() and key.strip() not in keys:
+                keys.append(key.strip())
+        return keys
 
 
 @lru_cache
