@@ -1,6 +1,7 @@
-import type { CefrLevel, EvaluationResponse, Language, LearningModule, SpeakingExercise, SpeakingExerciseListResponse, SpeakingStatistics, TokenPair, User } from '../types/api'
+import type { AccessTokenResponse, CefrLevel, EvaluationResponse, Language, LearningModule, SpeakingExercise, SpeakingExerciseListResponse, SpeakingStatistics, User } from '../types/api'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000/api/v1'
+// Keep the frontend and API on the same site in development so SameSite cookies work.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1'
 
 export class ApiError extends Error {
   status: number
@@ -12,12 +13,46 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, options: RequestInit = {}, accessToken?: string | null): Promise<T> {
+type RefreshHandler = () => Promise<string | null>
+
+let refreshHandler: RefreshHandler | null = null
+let activeRefresh: Promise<string | null> | null = null
+
+export function setRefreshHandler(handler: RefreshHandler | null) {
+  refreshHandler = handler
+}
+
+async function refreshAccessToken() {
+  if (!refreshHandler) return null
+  if (!activeRefresh) {
+    activeRefresh = refreshHandler().finally(() => {
+      activeRefresh = null
+    })
+  }
+  return activeRefresh
+}
+
+async function request<T>(
+  path: string,
+  options: RequestInit = {},
+  accessToken?: string | null,
+  hasRetried = false,
+): Promise<T> {
   const headers = new Headers(options.headers)
   if (options.body && !(options.body instanceof FormData)) headers.set('Content-Type', 'application/json')
   if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`)
 
-  const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers })
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers,
+    credentials: 'include',
+  })
+
+  if (response.status === 401 && accessToken && !hasRetried) {
+    const renewedToken = await refreshAccessToken()
+    if (renewedToken) return request<T>(path, options, renewedToken, true)
+  }
+
   if (!response.ok) {
     let message = `Request failed with status ${response.status}.`
     try {
@@ -28,6 +63,7 @@ async function request<T>(path: string, options: RequestInit = {}, accessToken?:
     }
     throw new ApiError(response.status, message)
   }
+  if (response.status === 204) return undefined as T
   return response.json() as Promise<T>
 }
 
@@ -56,12 +92,13 @@ export const api = {
   register: (name: string, email: string, password: string) => request<User>('/auth/register', {
     method: 'POST', body: JSON.stringify({ name, email, password }),
   }),
-  login: (email: string, password: string) => request<TokenPair>('/auth/login', {
+  login: (email: string, password: string) => request<AccessTokenResponse>('/auth/login', {
     method: 'POST', body: JSON.stringify({ email, password }),
   }),
-  refreshToken: (refreshToken: string) => request<TokenPair>('/auth/refresh', {
-    method: 'POST', body: JSON.stringify({ refresh_token: refreshToken }),
+  refreshToken: () => request<AccessTokenResponse>('/auth/refresh', {
+    method: 'POST',
   }),
+  logout: () => request<void>('/auth/logout', { method: 'POST' }),
   getCurrentUser: (token: string) => request<User>('/users/me', {}, token),
   getExercises: (
     languageCode: string,

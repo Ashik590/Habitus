@@ -27,9 +27,8 @@ export interface User {
   is_active: boolean
 }
 
-export interface TokenPair {
+export interface AccessTokenResponse {
   access_token: string
-  refresh_token: string
   token_type: string
 }
 

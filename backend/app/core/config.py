@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -14,6 +15,9 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
+    refresh_cookie_name: str = "habitus_refresh_token"
+    refresh_cookie_secure: bool = False
+    refresh_cookie_samesite: Literal["lax", "strict", "none"] = "lax"
 
     gemini_api_key: str | None = None
     gemini_api_key_2: str | None = None
@@ -38,6 +42,10 @@ class Settings(BaseSettings):
             if key and key.strip() and key.strip() not in keys:
                 keys.append(key.strip())
         return keys
+
+    @property
+    def refresh_cookie_max_age(self) -> int:
+        return self.refresh_token_expire_days * 24 * 60 * 60
 
 
 @lru_cache

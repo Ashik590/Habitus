@@ -1,7 +1,7 @@
 from uuid import UUID
 
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,20 +13,30 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
+from app.core.config import settings
 from app.db.session import get_database_session
 from app.models.user import User
-from app.schemas.auth import LoginRequest, RefreshRequest, TokenPair
+from app.schemas.auth import AccessTokenResponse, LoginRequest
 from app.schemas.user import UserRegister, UserResponse
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-def build_token_pair(user_id: UUID) -> TokenPair:
-    return TokenPair(
-        access_token=create_access_token(user_id),
-        refresh_token=create_refresh_token(user_id),
+def set_refresh_cookie(response: Response, user_id: UUID) -> None:
+    response.set_cookie(
+        key=settings.refresh_cookie_name,
+        value=create_refresh_token(user_id),
+        max_age=settings.refresh_cookie_max_age,
+        httponly=True,
+        secure=settings.refresh_cookie_secure,
+        samesite=settings.refresh_cookie_samesite,
+        path=f"{settings.api_v1_prefix}/auth",
     )
+
+
+def build_access_token(user_id: UUID) -> AccessTokenResponse:
+    return AccessTokenResponse(access_token=create_access_token(user_id))
 
 
 @router.post(
@@ -67,11 +77,12 @@ async def register_user(
     return user
 
 
-@router.post("/login", response_model=TokenPair)
+@router.post("/login", response_model=AccessTokenResponse)
 async def login(
     login_request: LoginRequest,
+    response: Response,
     session: AsyncSession = Depends(get_database_session),
-) -> TokenPair:
+) -> AccessTokenResponse:
     user = await session.scalar(
         select(User).where(User.email == login_request.email)
     )
@@ -91,16 +102,20 @@ async def login(
             detail="This account is inactive.",
         )
 
-    return build_token_pair(user.user_id)
+    set_refresh_cookie(response, user.user_id)
+    return build_access_token(user.user_id)
 
 
-@router.post("/refresh", response_model=TokenPair)
+@router.post("/refresh", response_model=AccessTokenResponse)
 async def refresh_tokens(
-    refresh_request: RefreshRequest,
+    response: Response,
+    refresh_token: str | None = Cookie(default=None, alias=settings.refresh_cookie_name),
     session: AsyncSession = Depends(get_database_session),
-) -> TokenPair:
+) -> AccessTokenResponse:
     try:
-        payload = decode_token(refresh_request.refresh_token)
+        if refresh_token is None:
+            raise ValueError("A refresh-token cookie is required.")
+        payload = decode_token(refresh_token)
         if payload.get("type") != "refresh":
             raise ValueError("A refresh token is required.")
         user_id = UUID(payload["sub"])
@@ -119,4 +134,17 @@ async def refresh_tokens(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    return build_token_pair(user.user_id)
+    # Rotate the cookie whenever it is used successfully.
+    set_refresh_cookie(response, user.user_id)
+    return build_access_token(user.user_id)
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout(response: Response) -> None:
+    response.delete_cookie(
+        key=settings.refresh_cookie_name,
+        path=f"{settings.api_v1_prefix}/auth",
+        secure=settings.refresh_cookie_secure,
+        httponly=True,
+        samesite=settings.refresh_cookie_samesite,
+    )
