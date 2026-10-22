@@ -19,7 +19,7 @@ class SpeakingExercise(Base):
     __tablename__ = "speaking_exercises"
     __table_args__ = (
         CheckConstraint(
-            "level IN ('A1', 'A2', 'B1', 'B2', 'C1')",
+            "level IN ('A1', 'A2', 'B1', 'B2', 'C1', 'C2')",
             name="ck_speaking_exercises_level",
         ),
         CheckConstraint(

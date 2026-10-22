@@ -18,7 +18,7 @@ from app.schemas.user import UserResponse
 
 
 router = APIRouter(prefix="/users", tags=["Users"])
-CEFR_LEVELS: tuple[CEFRLevel, ...] = ("A1", "A2", "B1", "B2", "C1")
+CEFR_LEVELS: tuple[CEFRLevel, ...] = ("A1", "A2", "B1", "B2", "C1", "C2")
 
 
 @router.get("/me", response_model=UserResponse)

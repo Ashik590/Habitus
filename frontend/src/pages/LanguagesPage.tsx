@@ -31,7 +31,7 @@ export function LanguagesPage() {
             <div>
               <span className="language-native">{language.bengali_name}</span>
               <h2>{language.name}</h2>
-              <p>Interactive exercises from A1 to C1.</p>
+              <p>Interactive exercises from A1 to C2.</p>
             </div>
             <span className="card-arrow" aria-hidden="true">→</span>
           </Link>

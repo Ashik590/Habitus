@@ -35,7 +35,7 @@ export function HomePage() {
           <div className="hero-perks">
             <span>⚡ Timed recall drills</span>
             <span>🎙 Real-time speech evaluation</span>
-            <span>📈 A1–C1 benchmarks</span>
+            <span>📈 A1–C2 benchmarks</span>
           </div>
         </div>
 
@@ -169,7 +169,7 @@ export function HomePage() {
               <div className="language-flag">🇩🇪</div>
               <h2>German</h2>
               <p className="language-native">জার্মান ভাষা চর্চা</p>
-              <p>Master German sentence structures, cases, and spoken clarity from A1 survival to C1 nuance.</p>
+              <p>Master German sentence structures, cases, and spoken clarity from A1 survival to C2 mastery.</p>
             </div>
             <div className="card-arrow">→</div>
           </Link>
