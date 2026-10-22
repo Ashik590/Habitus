@@ -32,12 +32,24 @@ export function Layout() {
           <HabitusLogo />
           <span>Habitus</span>
         </NavLink>
-        <nav aria-label="Main navigation">
-          <NavLink to="/languages">Languages</NavLink>
+        <nav className="site-nav" aria-label="Main navigation">
+          <NavLink className="nav-item" to="/" end>Home</NavLink>
+          <NavLink className="nav-item" to="/languages">Languages</NavLink>
+          <NavLink className="nav-item" to="/about">About</NavLink>
           {isInitializing ? null : user ? (
-            <><NavLink to="/profile">Dashboard</NavLink><button className="link-button" type="button" onClick={logout}>Log out</button></>
+            <>
+              <NavLink className="nav-item" to="/profile">Dashboard</NavLink>
+              <span className="nav-divider" aria-hidden="true" />
+              <button className="nav-item nav-logout-btn" type="button" onClick={logout}>
+                Log out
+              </button>
+            </>
           ) : (
-            <><NavLink to="/login">Log in</NavLink><NavLink className="button small" to="/register">Create account</NavLink></>
+            <>
+              <NavLink className="nav-item" to="/login">Log in</NavLink>
+              <span className="nav-divider" aria-hidden="true" />
+              <NavLink className="button small nav-cta-btn" to="/register">Create account</NavLink>
+            </>
           )}
         </nav>
       </header>

@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { AboutPage } from './pages/AboutPage'
 import { ExercisePage } from './pages/ExercisePage'
 import { ExercisesPage } from './pages/ExercisesPage'
 import { HomePage } from './pages/HomePage'
@@ -15,6 +16,7 @@ export default function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<HomePage />} />
+        <Route path="about" element={<AboutPage />} />
         <Route path="languages" element={<LanguagesPage />} />
         <Route path="languages/:languageCode" element={<LanguagePage />} />
         <Route path="languages/:languageCode/speaking/exercises" element={<ExercisesPage />} />
