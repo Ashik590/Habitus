@@ -89,13 +89,31 @@ export function AudioRecorder({
   }
 
   useEffect(() => {
-    updateStatus('active')
-    startSessionTimer()
+    clearTimer()
+    startedAtRef.current = Date.now()
+    intervalRef.current = window.setInterval(() => {
+      const elapsed = (Date.now() - startedAtRef.current) / 1000
+      const remaining = Math.max(0, Math.ceil(timeLimitSeconds - elapsed))
+      setRemainingSeconds(remaining)
+
+      if (remaining === 0) {
+        clearTimer()
+        if (statusRef.current === 'recording') {
+          stopRecording()
+        } else if (statusRef.current === 'active' || statusRef.current === 'requesting') {
+          releaseMicrophone()
+          updateStatus('expired')
+        }
+      }
+    }, 200)
     return () => {
       clearTimer()
       if (recorderRef.current?.state === 'recording') recorderRef.current.stop()
       releaseMicrophone()
     }
+    // The recorder is remounted for each exercise. Re-running this effect for
+    // callback identity changes would restart an active countdown.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exerciseId, timeLimitSeconds])
 
   async function evaluateRecording(audio: Blob) {

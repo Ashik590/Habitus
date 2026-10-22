@@ -20,8 +20,11 @@ export function ExercisePage() {
 
   useEffect(() => {
     if (!exerciseId) return
-    setIsFinished(false)
-    api.getExercise(languageCode, exerciseId, accessToken).then(setExercise).catch((requestError: unknown) => {
+    api.getExercise(languageCode, exerciseId, accessToken).then((loadedExercise) => {
+      setIsFinished(false)
+      setError('')
+      setExercise(loadedExercise)
+    }).catch((requestError: unknown) => {
       setError(requestError instanceof Error ? requestError.message : 'Could not load this exercise.')
     })
   }, [accessToken, exerciseId, languageCode])

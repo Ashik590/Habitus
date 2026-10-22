@@ -26,9 +26,6 @@ export function ExercisesPage() {
     if (isInitializing) return
 
     let cancelled = false
-    setLoading(true)
-    setError('')
-    setLoadMoreError('')
     api.getExercises(languageCode, accessToken, selectedLevel === 'All' ? undefined : selectedLevel, 0, 20)
       .then((response) => {
         if (!cancelled) {
