@@ -63,9 +63,24 @@ export const api = {
     method: 'POST', body: JSON.stringify({ refresh_token: refreshToken }),
   }),
   getCurrentUser: (token: string) => request<User>('/users/me', {}, token),
-  getExercises: (languageCode: string, token?: string | null, level?: CefrLevel) => request<SpeakingExerciseListResponse>(
-    `/languages/${languageCode}/speaking/exercises${level ? `?level=${level}` : ''}`, {}, token,
-  ),
+  getExercises: (
+    languageCode: string,
+    token?: string | null,
+    level?: CefrLevel,
+    offset = 0,
+    limit = 20,
+  ) => {
+    const params = new URLSearchParams()
+    if (level) params.append('level', level)
+    if (offset > 0) params.append('offset', String(offset))
+    if (limit !== 20) params.append('limit', String(limit))
+    const query = params.toString() ? `?${params.toString()}` : ''
+    return request<SpeakingExerciseListResponse>(
+      `/languages/${languageCode}/speaking/exercises${query}`,
+      {},
+      token,
+    )
+  },
   getExercise: (languageCode: string, id: string, token?: string | null) => request<SpeakingExercise>(`/languages/${languageCode}/speaking/exercises/${id}`, {}, token),
   getStatistics: (languageCode: string, token: string) => request<SpeakingStatistics>(`/users/me/languages/${languageCode}/speaking/statistics`, {}, token),
   evaluateExercise: (

@@ -150,11 +150,14 @@ h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); }
 .exercise-progress.completed-badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 999px; background: white; border: 1px solid var(--rose-border); color: var(--rose-dark); font-weight: 700; font-family: var(--font-mono); font-size: 0.82rem; box-shadow: 0 1px 3px rgba(158, 27, 75, 0.05); }
 .exercise-row.completed .row-arrow { color: var(--rose); font-weight: 700; }
 .exercise-row-btn { width: 100%; border: 0; background: transparent; font: inherit; text-align: left; cursor: pointer; }
+.load-more-container { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 28px; }
+.load-more-btn { min-width: 260px; padding: 12px 24px; font-weight: 650; }
 .exercise-title { display: flex; flex-direction: column; font-weight: 650; }
 .exercise-title small, .exercise-progress { color: var(--muted); font-weight: 450; font-family: var(--font-sans); }
 .level-badge { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 28px; border-radius: 6px; font-size: .78rem; font-weight: 750; font-family: var(--font-mono); background: var(--rose-soft); color: var(--rose); }
 .level-b1, .level-b2 { background: #fdf4eb; color: #9a5518; }
 .level-c1 { background: #f7f0fa; color: #6e3582; }
+.level-c2 { background: #2a1124; color: #fde8ef; font-weight: 800; }
 .status-message { padding: 20px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--muted); }
 .status-message.error, .form-error { color: var(--danger); background: #fdf0f0; border-color: #f7d2d2; }
 .practice-card { max-width: 900px; margin: 0 auto; padding: 38px 42px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); }

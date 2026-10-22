@@ -4,7 +4,7 @@ import { useAuth } from '../auth/useAuth'
 import { api } from '../lib/api'
 import type { CefrLevel, SpeakingExercise } from '../types/api'
 
-const levels: Array<CefrLevel | 'All'> = ['All', 'A1', 'A2', 'B1', 'B2', 'C1']
+const levels: Array<CefrLevel | 'All'> = ['All', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const languageNames: Record<string, string> = {
   en: 'English',
   de: 'German',
@@ -16,22 +16,53 @@ export function ExercisesPage() {
   const { accessToken, isInitializing } = useAuth()
   const [selectedLevel, setSelectedLevel] = useState<CefrLevel | 'All'>('All')
   const [exercises, setExercises] = useState<SpeakingExercise[]>([])
+  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState('')
+  const [loadMoreError, setLoadMoreError] = useState('')
 
   useEffect(() => {
     if (isInitializing) return
 
     let cancelled = false
     setLoading(true)
-    api.getExercises(languageCode, accessToken, selectedLevel === 'All' ? undefined : selectedLevel)
-      .then((response) => { if (!cancelled) setExercises(response.items) })
+    setError('')
+    setLoadMoreError('')
+    api.getExercises(languageCode, accessToken, selectedLevel === 'All' ? undefined : selectedLevel, 0, 20)
+      .then((response) => {
+        if (!cancelled) {
+          setExercises(response.items)
+          setTotal(response.total)
+        }
+      })
       .catch((requestError: unknown) => {
         if (!cancelled) setError(requestError instanceof Error ? requestError.message : 'Could not load exercises.')
       })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [accessToken, isInitializing, languageCode, selectedLevel])
+
+  async function handleLoadMore() {
+    if (loadingMore || exercises.length >= total) return
+    setLoadingMore(true)
+    setLoadMoreError('')
+    try {
+      const response = await api.getExercises(
+        languageCode,
+        accessToken,
+        selectedLevel === 'All' ? undefined : selectedLevel,
+        exercises.length,
+        20,
+      )
+      setExercises((prev) => [...prev, ...response.items])
+      setTotal(response.total)
+    } catch (err: unknown) {
+      setLoadMoreError(err instanceof Error ? err.message : 'Could not load more exercises.')
+    } finally {
+      setLoadingMore(false)
+    }
+  }
 
   const [pendingExercise, setPendingExercise] = useState<SpeakingExercise | null>(null)
 
@@ -85,6 +116,20 @@ export function ExercisesPage() {
           </button>
         ))}
       </div>
+
+      {exercises.length < total && (
+        <div className="load-more-container">
+          <button
+            className="button secondary load-more-btn"
+            type="button"
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+          >
+            {loadingMore ? 'Loading more exercises…' : `Show more exercises (${exercises.length} of ${total})`}
+          </button>
+          {loadMoreError && <p className="status-message error load-more-error">{loadMoreError}</p>}
+        </div>
+      )}
 
       {pendingExercise && (
         <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
