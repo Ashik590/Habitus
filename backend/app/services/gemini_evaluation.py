@@ -305,6 +305,7 @@ def _send_gemini_request(
         config=types.GenerateContentConfig(
             temperature=temperature,
             response_mime_type="application/json",
+            response_schema=GeminiEvaluation,
             http_options=types.HttpOptions(
                 timeout=30_000,
                 retry_options=types.HttpRetryOptions(attempts=1),
@@ -975,31 +976,9 @@ a correct recommendation.
 10. OUTPUT FORMAT
 ==================================================
 
-Return exactly one valid JSON object with the following fields:
-
-recognized_translation
-is_valid_response
-feedback
-accuracy_score
-completeness_score
-grammar_score
-naturalness_score
-fluency_score
-recommended_translations
-
-Output requirements:
-
-- Return JSON only.
-- Do not include Markdown code fences.
-- Do not add explanations outside the JSON object.
-- Use a boolean for is_valid_response.
-- Use a string for feedback (articulates errors and critique before numerical scoring).
-- Use numerical values from 0 to 100 for all dimension scores.
-- Use a string for recognized_translation.
-- Use an array of strings for recommended_translations.
-- Include every required field exactly once.
-- Do not include additional fields.
-- Ensure the JSON is syntactically valid.
+Return the evaluation using the provided response schema.
+Ensure the feedback, recognized translation, response validity, and
+dimension scores are mutually consistent.
 """.strip()
 
 
