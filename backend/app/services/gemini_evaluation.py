@@ -1047,7 +1047,10 @@ def _evaluate_audio_sync(
     logger.info("Step 1: Running local Whisper transcription for '%s'...", target_language_name)
     raw_transcript = transcribe_audio_locally(normalized_bytes, target_language_code)
     cleaned_transcript = _clean_transcription(raw_transcript)
-    logger.info("Step 1 Whisper Result: '%s'", cleaned_transcript)
+    logger.info(
+        "Whisper transcription completed: characters=%d",
+        len(cleaned_transcript),
+    )
 
     # Short-circuit: If no intelligible speech was recognized, stop immediately without calling Gemini!
     if not cleaned_transcript:
@@ -1088,7 +1091,7 @@ def _evaluate_audio_sync(
         contents=[audio_part, evaluation_prompt],
         temperature=0.0,
     )
-    logger.info("Gemini Raw Evaluation Response: %s", evaluation_response.text)
+            logger.info("Gemini evaluation response received")
 
     try:
         return GeminiEvaluation.model_validate_json(
