@@ -36,6 +36,7 @@ export function AudioRecorder({
   const [remainingSeconds, setRemainingSeconds] = useState(timeLimitSeconds)
   const [feedbackLanguage, setFeedbackLanguage] = useState<'en' | 'bn'>('en')
   const [result, setResult] = useState<EvaluationResponse | null>(null)
+  const [showSolutions, setShowSolutions] = useState(false)
   const [error, setError] = useState('')
 
   const statusRef = useRef<RecorderStatus>('active')
@@ -126,6 +127,7 @@ export function AudioRecorder({
         feedbackLanguage,
         accessToken,
       )
+      setShowSolutions(false)
       setResult(evaluation)
       updateStatus('complete')
     } catch (requestError) {
@@ -157,6 +159,7 @@ export function AudioRecorder({
     updateStatus('requesting')
     setError('')
     setResult(null)
+    setShowSolutions(false)
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -202,6 +205,7 @@ export function AudioRecorder({
     releaseMicrophone()
     setError('')
     setResult(null)
+    setShowSolutions(false)
     updateStatus('active')
     startSessionTimer()
   }
@@ -316,14 +320,33 @@ export function AudioRecorder({
             <h2>Feedback</h2>
             <p>{result.feedback}</p>
           </div>
-          <div className="translations">
-            <h2>Recommended translations</h2>
-            <ul>
-              {result.recommended_translations.map((translation) => (
-                <li key={translation}>{translation}</li>
-              ))}
-            </ul>
-          </div>
+          {result.is_valid_response && result.recommended_translations.length > 0 && (
+            <>
+              <div className="button-row action-footer">
+                <button
+                  className="button secondary"
+                  type="button"
+                  aria-expanded={showSolutions}
+                  aria-controls="recommended-translations"
+                  onClick={() => setShowSolutions((visible) => !visible)}
+                >
+                  {showSolutions
+                    ? 'Hide recommended translations'
+                    : 'View recommended translations'}
+                </button>
+              </div>
+              {showSolutions && (
+                <div id="recommended-translations" className="translations">
+                  <h2>Recommended translations</h2>
+                  <ul>
+                    {result.recommended_translations.map((translation) => (
+                      <li key={translation}>{translation}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          )}
           <div className="button-row action-footer">
             <button className="button" type="button" onClick={handleReset}>
               Practice Again
