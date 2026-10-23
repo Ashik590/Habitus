@@ -79,7 +79,7 @@ export interface EvaluationResponse {
   naturalness_score: number
   fluency_score: number
   overall_score: number
-  feedback: string
+  feedback: string[]
   recommended_translations: string[]
   saved: boolean
 }

@@ -225,6 +225,34 @@ h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); }
 .feedback-box, .translations { margin-top: 14px; padding: 20px; border: 1px solid var(--line); border-radius: 12px; }
 .feedback-box h2, .translations h2 { margin-bottom: 10px; font-size: 1rem; }
 .feedback-box p { color: var(--muted); line-height: 1.65; margin-bottom: 0; }
+.feedback-box ul { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.feedback-box li {
+  position: relative;
+  padding: 13px 16px 13px 42px;
+  border: 1px solid var(--rose-border);
+  border-left: 4px solid var(--rose);
+  border-radius: 10px;
+  color: var(--ink);
+  background: var(--rose-soft);
+  font-weight: 650;
+  line-height: 1.55;
+}
+.feedback-box li::before {
+  content: "!";
+  position: absolute;
+  top: 13px;
+  left: 15px;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border-radius: 50%;
+  color: white;
+  background: var(--rose);
+  font-size: .72rem;
+  font-weight: 800;
+  line-height: 1;
+}
 .translations ul { margin: 0; padding-left: 20px; color: var(--muted); }
 .translations li + li { margin-top: 8px; }
 @keyframes recording-pulse { 50% { transform: scale(.72); opacity: .65; } }

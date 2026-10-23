@@ -18,7 +18,7 @@ class GeminiEvaluation(BaseModel):
     grammar_score: int = Field(ge=0, le=100)
     naturalness_score: int = Field(ge=0, le=100)
     fluency_score: int = Field(ge=0, le=100)
-    feedback: str = Field(min_length=1)
+    feedback: list[str] = Field(max_length=5)
     recommended_translations: list[str] = Field(min_length=1, max_length=3)
 
     @model_validator(mode="after")
@@ -41,6 +41,6 @@ class EvaluationResponse(BaseModel):
     naturalness_score: int
     fluency_score: int
     overall_score: float
-    feedback: str
+    feedback: list[str]
     recommended_translations: list[str]
     saved: bool

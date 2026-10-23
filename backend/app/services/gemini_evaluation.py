@@ -921,23 +921,21 @@ Use independent judgment for every score.
 
 FEEDBACK:
 
-Provide concise, constructive feedback in {feedback_language_name}.
+Return "feedback" as a list containing only the problems identified in
+the learner's response, written in {feedback_language_name}.
 
-Identify the most important strengths and weaknesses of the learner's
-response.
+Each list item must identify one distinct, specific problem. Keep every
+item concise and understandable. Refer to the learner's actual wording
+when that helps explain the problem.
 
-Mention specific errors or omissions when relevant.
+Order the problems from most important to least important. Do not repeat
+the same underlying problem in multiple items. Do not organize the list
+by scoring dimension, add metric labels, include generic encouragement,
+or add praise. Return no more than five items.
 
-Explain the difference between what the learner said and what the
-source sentence intended, focusing on the most important areas
-for improvement.
-
-Make the feedback consistent with the assigned scores.
-
-Do not praise incorrect work merely to be encouraging. Be respectful,
-objective, and constructive.
-
-Avoid unnecessarily long explanations.
+Make every identified problem consistent with the recognized speech and
+the assigned scores. If there are no meaningful problems, return an
+empty list rather than inventing criticism.
 
 RECOMMENDED TRANSLATIONS:
 
@@ -1004,7 +1002,7 @@ def _evaluate_audio_sync(
             grammar_score=0,
             naturalness_score=0,
             fluency_score=0,
-            feedback=feedback,
+            feedback=[feedback],
             recommended_translations=exercise.preferred_solutions[:3],
         )
 

@@ -317,7 +317,19 @@ export function AudioRecorder({
           </div>
           <div className="feedback-box">
             <h2>Feedback</h2>
-            <p>{result.feedback}</p>
+            {result.feedback.length > 0 ? (
+              <ul>
+                {result.feedback.map((problem, index) => (
+                  <li key={`${index}-${problem}`}>{problem}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>
+                {feedbackLanguage === 'bn'
+                  ? 'কোনো উল্লেখযোগ্য সমস্যা শনাক্ত করা যায়নি।'
+                  : 'No significant problems detected.'}
+              </p>
+            )}
           </div>
           {result.is_valid_response && result.recommended_translations.length > 0 && (
             <>
