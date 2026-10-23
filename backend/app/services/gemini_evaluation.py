@@ -510,9 +510,9 @@ meaningless, or constitutes a refusal or a non-attempt to translate.
 
 An incorrect translation is still a valid translation attempt.
 
-If "is_valid_response" is false, set all six numerical scores to 0:
+If "is_valid_response" is false, set all five dimension scores to 0:
 accuracy_score, completeness_score, grammar_score, naturalness_score,
-fluency_score, and overall_score.
+and fluency_score.
 
 If true, evaluate all dimensions according to their respective rules.
 
@@ -931,27 +931,7 @@ Use independent judgment for every score.
 
 
 ==================================================
-9. OVERALL SCORE
-==================================================
-
-Calculate the overall score using the following weighted formula:
-
-overall_score =
-    (0.35 * accuracy_score) +
-    (0.15 * completeness_score) +
-    (0.20 * grammar_score) +
-    (0.15 * naturalness_score) +
-    (0.15 * fluency_score)
-
-Use the numerical dimension scores in this formula.
-
-Round the final overall score to one decimal place.
-
-If "is_valid_response" is false, set overall_score to 0.
-
-
-==================================================
-10. FEEDBACK AND RECOMMENDATIONS
+9. FEEDBACK AND RECOMMENDATIONS
 ==================================================
 
 FEEDBACK:
@@ -992,7 +972,7 @@ a correct recommendation.
 
 
 ==================================================
-11. OUTPUT FORMAT
+10. OUTPUT FORMAT
 ==================================================
 
 Return exactly one valid JSON object with the following fields:
@@ -1005,7 +985,6 @@ completeness_score
 grammar_score
 naturalness_score
 fluency_score
-overall_score
 recommended_translations
 
 Output requirements:
@@ -1016,8 +995,6 @@ Output requirements:
 - Use a boolean for is_valid_response.
 - Use a string for feedback (articulates errors and critique before numerical scoring).
 - Use numerical values from 0 to 100 for all dimension scores.
-- Use a numerical value from 0 to 100 for overall_score.
-- Round overall_score to one decimal place.
 - Use a string for recognized_translation.
 - Use an array of strings for recommended_translations.
 - Include every required field exactly once.
@@ -1047,10 +1024,7 @@ def _evaluate_audio_sync(
     logger.info("Step 1: Running local Whisper transcription for '%s'...", target_language_name)
     raw_transcript = transcribe_audio_locally(normalized_bytes, target_language_code)
     cleaned_transcript = _clean_transcription(raw_transcript)
-    logger.info(
-        "Whisper transcription completed: characters=%d",
-        len(cleaned_transcript),
-    )
+    logger.info("Step 1 Whisper Result: '%s'", cleaned_transcript)
 
     # Short-circuit: If no intelligible speech was recognized, stop immediately without calling Gemini!
     if not cleaned_transcript:
@@ -1068,7 +1042,6 @@ def _evaluate_audio_sync(
             grammar_score=0,
             naturalness_score=0,
             fluency_score=0,
-            overall_score=0,
             feedback=feedback,
             recommended_translations=exercise.preferred_solutions[:3],
         )
@@ -1091,7 +1064,7 @@ def _evaluate_audio_sync(
         contents=[audio_part, evaluation_prompt],
         temperature=0.0,
     )
-            logger.info("Gemini evaluation response received")
+    logger.info("Gemini Raw Evaluation Response: %s", evaluation_response.text)
 
     try:
         return GeminiEvaluation.model_validate_json(

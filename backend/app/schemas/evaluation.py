@@ -9,14 +9,16 @@ FeedbackLanguage = Literal["en", "bn"]
 class GeminiEvaluation(BaseModel):
     recognized_translation: str
     is_valid_response: bool = Field(
-        description="Whether understandable spoken English translation was detected."
+        description=(
+            "Whether a genuine, assessable spoken translation attempt in the "
+            "exercise's target language was detected."
+        )
     )
     accuracy_score: int = Field(ge=0, le=100)
     completeness_score: int = Field(ge=0, le=100)
     grammar_score: int = Field(ge=0, le=100)
     naturalness_score: int = Field(ge=0, le=100)
     fluency_score: int = Field(ge=0, le=100)
-    overall_score: float = Field(ge=0, le=100)
     feedback: str = Field(min_length=1)
     recommended_translations: list[str] = Field(min_length=1, max_length=3)
 
@@ -29,7 +31,6 @@ class GeminiEvaluation(BaseModel):
             self.grammar_score = 0
             self.naturalness_score = 0
             self.fluency_score = 0
-            self.overall_score = 0
         return self
 
 
