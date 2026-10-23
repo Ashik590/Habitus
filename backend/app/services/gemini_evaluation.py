@@ -937,11 +937,11 @@ Use independent judgment for every score.
 Calculate the overall score using the following weighted formula:
 
 overall_score =
-    (0.25 * accuracy_score) +
-    (0.25 * completeness_score) +
+    (0.35 * accuracy_score) +
+    (0.15 * completeness_score) +
     (0.20 * grammar_score) +
-    (0.20 * fluency_score) +
-    (0.10 * naturalness_score)
+    (0.15 * naturalness_score) +
+    (0.15 * fluency_score)
 
 Use the numerical dimension scores in this formula.
 
