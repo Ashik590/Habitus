@@ -1,6 +1,6 @@
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 FeedbackLanguage = Literal["en", "bn"]
@@ -19,6 +19,18 @@ class GeminiEvaluation(BaseModel):
     overall_score: float = Field(ge=0, le=100)
     feedback: str = Field(min_length=1)
     recommended_translations: list[str] = Field(min_length=1, max_length=3)
+
+    @model_validator(mode="after")
+    def zero_scores_for_invalid_response(self) -> Self:
+        """An invalid speaking attempt cannot carry contradictory positive scores."""
+        if not self.is_valid_response:
+            self.accuracy_score = 0
+            self.completeness_score = 0
+            self.grammar_score = 0
+            self.naturalness_score = 0
+            self.fluency_score = 0
+            self.overall_score = 0
+        return self
 
 
 class EvaluationResponse(BaseModel):
