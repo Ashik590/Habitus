@@ -5,11 +5,13 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000
 
 export class ApiError extends Error {
   status: number
+  retryAfterSeconds: number | null
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, retryAfterSeconds: number | null = null) {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.retryAfterSeconds = retryAfterSeconds
   }
 }
 
@@ -61,7 +63,13 @@ async function request<T>(
     } catch {
       // The server did not return a JSON error body.
     }
-    throw new ApiError(response.status, message)
+    const retryAfterHeader = response.headers.get('Retry-After')
+    const parsedRetryAfter = retryAfterHeader ? Number.parseInt(retryAfterHeader, 10) : Number.NaN
+    throw new ApiError(
+      response.status,
+      message,
+      Number.isFinite(parsedRetryAfter) ? parsedRetryAfter : null,
+    )
   }
   if (response.status === 204) return undefined as T
   return response.json() as Promise<T>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { api } from '../lib/api'
+import { ApiError, api } from '../lib/api'
 import type { EvaluationResponse } from '../types/api'
 
 type RecorderStatus = 'active' | 'requesting' | 'recording' | 'evaluating' | 'complete' | 'expired'
@@ -129,7 +129,14 @@ export function AudioRecorder({
       setResult(evaluation)
       updateStatus('complete')
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : 'Evaluation failed.')
+      const retryMessage = requestError instanceof ApiError && requestError.retryAfterSeconds
+        ? ` Try again in approximately ${requestError.retryAfterSeconds} seconds.`
+        : ''
+      setError(
+        requestError instanceof Error
+          ? `${requestError.message}${retryMessage}`
+          : 'Evaluation failed.',
+      )
       updateStatus('expired')
     }
   }

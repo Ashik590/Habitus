@@ -148,9 +148,13 @@ async def evaluate_exercise(
             feedback_language,
         )
     except EvaluationServiceError as exc:
+        headers = None
+        if exc.retry_after_seconds is not None:
+            headers = {"Retry-After": str(exc.retry_after_seconds)}
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            status_code=exc.status_code,
             detail=str(exc),
+            headers=headers,
         ) from exc
 
     overall_score = calculate_overall_score(evaluation)
