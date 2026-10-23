@@ -511,9 +511,8 @@ meaningless, or constitutes a refusal or a non-attempt to translate.
 
 An incorrect translation is still a valid translation attempt.
 
-If "is_valid_response" is false, set all five dimension scores to 0:
-accuracy_score, completeness_score, grammar_score, naturalness_score,
-and fluency_score.
+If "is_valid_response" is false, set all four dimension scores to 0:
+accuracy_score, grammar_score, naturalness_score, and fluency_score.
 
 If true, evaluate all dimensions according to their respective rules.
 
@@ -523,8 +522,13 @@ If true, evaluate all dimensions according to their respective rules.
 ==================================================
 
 Definition:
-Accuracy measures how faithfully the meaning conveyed by the
-learner's complete response matches the meaning of the source sentence.
+Accuracy measures whether the complete meaning conveyed by the learner
+is semantically equivalent to the complete meaning of the source.
+
+Apply this criterion strictly. Full accuracy requires preservation of
+the whole source meaning. Missing information, additional information,
+substituted information, contradictions, and altered relationships must
+all reduce the score according to their semantic importance.
 
 Judge the meaning actually conveyed, not merely the presence of
 overlapping words or individual concepts.
@@ -553,30 +557,35 @@ D. Semantic contradictions:
 Identify whether the learner's response introduces claims that
 contradict or materially alter the meaning of the source.
 
-E. Meaning-changing additions:
-Consider whether the learner introduces additional information,
-qualifications, uncertainty, negation, or other meanings that
-materially change the original message.
+E. Additions and omissions:
+Identify every meaningful source detail that was omitted and every
+meaningful claim, qualification, relationship, or circumstance that
+the learner added. Both omissions and additions reduce semantic
+equivalence and therefore reduce accuracy.
 
-Do not automatically penalize every harmless addition. Evaluate
-whether the addition changes or distorts the intended meaning.
+The presence of some matching words, participants, or objects does not
+make a response accurate when they occur inside a different action,
+state, relationship, or central proposition. Judge the proposition as
+a whole rather than awarding credit for isolated lexical overlap.
 
 SCORING GUIDELINES:
 
-95-100: The conveyed meaning faithfully preserves the source meaning,
-including its important temporal and semantic distinctions.
+100: Complete semantic equivalence. No meaningful information is
+missing, added, substituted, contradicted, or altered.
 
-80-94: The meaning is substantially faithful, with only minor
-semantic distortions that do not substantially alter the message.
+90-99: Nearly equivalent, but an extremely small semantic nuance is
+missing, added, or altered. Do not use this range for a clearly
+different property, relationship, action, state, time, or condition.
 
-60-79: The response preserves some important meaning but contains
-a significant semantic error or alteration.
+70-89: Much of the intended meaning is preserved, but at least one
+meaningful detail is missing, added, substituted, or altered.
 
-30-59: The response contains substantial mistranslations or
-material changes to important aspects of the source meaning.
+40-69: A major component, relationship, action, state, qualification,
+or other important part of the source meaning is wrong or missing.
 
-1-29: Very little of the intended meaning is preserved, although
-the response remains a genuine translation attempt.
+1-39: The central meaning is substantially different. Only fragments
+of the source meaning correspond, even if several words or participants
+overlap.
 
 0: No meaningful semantic correspondence exists, or the response
 is invalid under the response-validity rules.
@@ -584,14 +593,9 @@ is invalid under the response-validity rules.
 These ranges are guidance, not rigid scoring formulas. Select the
 score that best reflects the actual semantic fidelity of the response.
 
-IMPORTANT DISTINCTION:
-
-Accuracy evaluates whether the meaning conveyed is correct.
-Completeness evaluates how much of the source information is conveyed.
-
-An omitted concept should primarily reduce completeness. A concept
-that is replaced with a different meaning, distorted, or contradicted
-should reduce accuracy.
+Accuracy includes both correctness and complete semantic coverage.
+Every meaningful omission belongs in the accuracy judgment, as does
+every addition, substitution, distortion, or contradiction.
 
 When a temporal or aspectual change alters the meaning of the source,
 penalize accuracy according to the severity of that change. Do not
@@ -604,15 +608,11 @@ may express different meanings depending on context.
 
 
 ==================================================
-4. COMPLETENESS SCORE — WEIGHTED SEMANTIC COVERAGE
+4. STRICT ACCURACY COVERAGE RULES
 ==================================================
 
-Definition:
-Completeness measures how much of the meaningful information in
-the source sentence is conveyed by the learner's response.
-
-It does not measure whether the conveyed information is correct.
-Semantic correctness belongs primarily to accuracy.
+Accuracy must account for every meaningful part of the source, not
+only its general topic or a collection of matching words.
 
 STEP 1: DECOMPOSE THE SOURCE SENTENCE
 
@@ -647,7 +647,7 @@ absence does not substantially affect the central message.
 Determine importance according to the actual source sentence and
 its context. Do not assume every unit has equal importance.
 
-STEP 3: IDENTIFY THE UNITS CONVEYED
+STEP 3: IDENTIFY WHAT WAS FAITHFULLY CONVEYED
 
 Determine which source semantic units are expressed in the learner's
 response, even if they are expressed using different but valid wording.
@@ -661,47 +661,35 @@ communicated, not merely when a related word appears in the response.
 A source concept that is completely omitted should count as missing.
 
 If the learner replaces a source concept with a different concept,
-distinguish the missing source information from the incorrect
-information introduced. Apply the appropriate accuracy and
-completeness penalties without automatically counting the same
-error twice.
+the source information is missing and different information has been
+introduced. Treat that as a serious loss of semantic equivalence.
 
-STEP 4: CALCULATE COMPLETENESS
+STEP 4: DETERMINE THE ACCURACY SCORE
 
-Estimate completeness using the proportion and relative importance
-of the source information successfully conveyed.
-
-Use this conceptual formula:
-
-Completeness Score =
-(Weighted importance of source units conveyed /
- Total weighted importance of source units) * 100
-
-This is a conceptual scoring framework, not an instruction to count
-words or assign equal weights to every unit.
+Judge the degree of semantic equivalence using both the proportion and
+relative importance of the source information faithfully conveyed.
+This is not an instruction to count words or assign equal importance
+to every unit.
 
 Major omissions must cause substantially greater reductions than
 minor omissions.
 
-Missing a central action, participant, destination, or other essential
-unit should substantially reduce completeness when that unit is
-important to the source message.
+Missing or changing a central action, state, participant, relationship,
+destination, or other essential unit must substantially reduce accuracy.
 
 Missing a minor detail should cause a comparatively small reduction.
 
-Do not automatically assign the same completeness score to every
-response that omits one unit. Consider the importance of the omitted
-unit relative to the complete source sentence.
+Do not assign the same penalty to every difference. Consider the
+semantic importance of what is missing, added, substituted, or changed.
 
-Completeness should reflect the information actually communicated,
-not the grammatical quality, fluency, or naturalness of the response.
+Accuracy must reflect the meaning actually communicated, not the
+grammatical quality, fluency, or naturalness of the response.
 
-If all meaningful source information is conveyed, completeness should
-be high even if the learner's wording is grammatically awkward.
+If the entire source meaning is faithfully conveyed, accuracy can be
+high even if the learner's wording is grammatically awkward.
 
-If only a small portion of the source information is conveyed,
-completeness should be low even if that portion is grammatically
-perfect.
+If only a small portion of the source meaning is faithfully conveyed,
+accuracy must be low even if that portion is grammatically perfect.
 
 Do not force an exact numerical result from an arbitrary number of
 semantic units. Use the identified units, their importance, and the
@@ -758,13 +746,13 @@ These speech-delivery characteristics belong under fluency.
 
 SCORING GUIDELINES:
 
-95-100: Grammatically correct, with no meaningful grammatical errors.
+100: Fully grammatical, with no grammatical errors.
 
-85-94: Strong grammatical control, with minor errors.
+90-99: Nearly flawless grammar, with only a negligible issue.
 
-70-84: Generally understandable structure, with noticeable errors.
+75-89: Strong grammatical control, but with one or more clear errors.
 
-50-69: Multiple significant grammatical problems.
+50-74: Multiple meaningful grammatical problems.
 
 25-49: Frequent grammatical errors that substantially weaken
 sentence structure.
@@ -812,24 +800,27 @@ A sentence can also sound natural and fluent while conveying
 the wrong meaning.
 
 Do not automatically award a high naturalness score merely because
-a sentence is accurate, complete, or grammatically correct.
+a sentence is accurate or grammatically correct.
 
 Likewise, do not automatically lower naturalness because the
 translation differs from the reference translation.
 
-Evaluate naturalness independently of accuracy and completeness.
+Evaluate naturalness independently of accuracy.
 
 SCORING GUIDELINES:
 
-90-100: Natural, idiomatic, and appropriate phrasing.
+100: Fully natural, idiomatic, conventional, and contextually
+appropriate phrasing for proficient speakers.
 
-80-89: Generally natural, with minor awkwardness.
+90-99: Highly natural, with only negligible awkwardness.
 
-65-79: Understandable but noticeably awkward or stylistically unusual.
+75-89: Generally natural, but with clearly noticeable awkwardness or
+an uncommon word combination.
 
-40-64: Frequently unnatural, overly literal, or unidiomatic phrasing.
+50-74: Understandable but repeatedly unnatural, overly literal, or
+stylistically unusual.
 
-1-39: Severely unnatural phrasing that makes the sentence difficult
+1-49: Severely unnatural phrasing that makes the sentence difficult
 to interpret as conventional target-language usage.
 
 0: Apply only when required by the invalid-response rules or when
@@ -857,7 +848,7 @@ Assess:
 Do not evaluate fluency from the written transcript alone.
 
 Do not penalize the learner's fluency because their translation
-is inaccurate, incomplete, grammatically incorrect, or unnatural.
+is inaccurate, grammatically incorrect, or unnatural.
 
 Do not penalize accent differences by themselves, provided the
 speech delivery remains assessable.
@@ -868,11 +859,14 @@ pause as an error.
 
 SCORING GUIDELINES:
 
-85-100: Natural, continuous pacing with smooth rhythmic flow.
+100: Fully smooth, continuous, naturally paced delivery without
+meaningful hesitation or disruption.
 
-70-84: Steady delivery with only brief or occasional hesitations.
+90-99: Highly fluent delivery with only negligible disruption.
 
-50-69: Noticeably slow, cautious, or deliberate delivery, with
+75-89: Steady delivery with brief or occasional noticeable hesitation.
+
+50-74: Noticeably slow, cautious, or deliberate delivery, with
 some interruptions to the flow.
 
 25-49: Halting, fragmented delivery with frequent or prolonged
@@ -892,11 +886,9 @@ the learner's speaking ability.
 8. INDEPENDENCE OF SCORING DIMENSIONS
 ==================================================
 
-The five dimensions evaluate different aspects of performance.
+The four dimensions evaluate different aspects of performance.
 
 Accuracy: Is the conveyed meaning faithful to the source?
-
-Completeness: How much of the source information is conveyed?
 
 Grammar: Is the learner's sentence grammatically correct?
 
@@ -909,24 +901,16 @@ Do not use one dimension as a substitute for another.
 In particular:
 - Do not lower grammar solely because meaning is incorrect.
 - Do not lower fluency solely because grammar is incorrect.
-- Do not lower naturalness solely because information is omitted.
-- Do not lower accuracy solely because the sentence is incomplete.
-- Do not lower completeness solely because the sentence is
-  grammatically incorrect.
+- Do not lower naturalness solely because meaning is inaccurate.
 - Do not award high accuracy simply because the response contains
   several correct words.
 - Do not award high naturalness simply because the response is
   fluent or grammatically correct.
 
-An individual error may legitimately affect multiple dimensions
-when it independently affects them. However, avoid arbitrary
-double penalties for the same underlying problem.
-
-For example, an error that changes the source meaning belongs
-under accuracy. If that change also leaves source information
-unconveyed, completeness may be affected as well. Evaluate each
-dimension according to its own definition rather than applying
-automatic deductions across dimensions.
+An individual error may legitimately affect multiple dimensions only
+when it independently affects the separate property measured by each
+dimension. Do not transfer an accuracy penalty automatically into
+grammar, naturalness, or fluency.
 
 Use independent judgment for every score.
 
@@ -1017,7 +1001,6 @@ def _evaluate_audio_sync(
             recognized_translation="",
             is_valid_response=False,
             accuracy_score=0,
-            completeness_score=0,
             grammar_score=0,
             naturalness_score=0,
             fluency_score=0,

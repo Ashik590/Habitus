@@ -84,8 +84,8 @@ export function HomePage() {
                   <strong>94%</strong>
                 </div>
                 <div className="preview-score-item">
-                  <small>Completeness</small>
-                  <strong>100%</strong>
+                  <small>Grammar</small>
+                  <strong>97%</strong>
                 </div>
                 <div className="preview-score-item">
                   <small>Naturalness</small>
@@ -134,8 +134,8 @@ export function HomePage() {
             <div className="how-step-num">03</div>
             <h3>Instant Diagnostic Feedback</h3>
             <p>
-              Receive instant scores across 5 core dimensions: accuracy, completeness, grammar,
-              naturalness, and speech fluency.
+              Receive instant scores across 4 core dimensions: accuracy, grammar, naturalness,
+              and speech fluency.
             </p>
           </article>
         </div>

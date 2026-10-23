@@ -14,7 +14,6 @@ class LevelStatistics(BaseModel):
 
 class DimensionAverages(BaseModel):
     accuracy: float | None
-    completeness: float | None
     grammar: float | None
     naturalness: float | None
     fluency: float | None

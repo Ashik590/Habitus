@@ -14,7 +14,6 @@ interface AudioRecorderProps {
 
 const scoreMetrics: Array<[keyof EvaluationResponse, string]> = [
   ['accuracy_score', 'Accuracy'],
-  ['completeness_score', 'Completeness'],
   ['grammar_score', 'Grammar'],
   ['naturalness_score', 'Naturalness'],
   ['fluency_score', 'Fluency'],

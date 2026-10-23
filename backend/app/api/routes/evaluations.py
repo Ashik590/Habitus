@@ -46,9 +46,8 @@ def calculate_overall_score(evaluation: GeminiEvaluation) -> Decimal:
         return Decimal("0.00")
     weighted = (
         Decimal("0.35") * Decimal(evaluation.accuracy_score)
-        + Decimal("0.15") * Decimal(evaluation.completeness_score)
         + Decimal("0.20") * Decimal(evaluation.grammar_score)
-        + Decimal("0.15") * Decimal(evaluation.naturalness_score)
+        + Decimal("0.30") * Decimal(evaluation.naturalness_score)
         + Decimal("0.15") * Decimal(evaluation.fluency_score)
     )
     return weighted.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
@@ -65,7 +64,6 @@ async def save_authenticated_result(
         "user_id": user.user_id,
         "exercise_id": exercise.exercise_id,
         "accuracy_score": evaluation.accuracy_score,
-        "completeness_score": evaluation.completeness_score,
         "grammar_score": evaluation.grammar_score,
         "naturalness_score": evaluation.naturalness_score,
         "fluency_score": evaluation.fluency_score,
@@ -173,7 +171,6 @@ async def evaluate_exercise(
         is_valid_response=evaluation.is_valid_response,
         recognized_translation=evaluation.recognized_translation,
         accuracy_score=evaluation.accuracy_score,
-        completeness_score=evaluation.completeness_score,
         grammar_score=evaluation.grammar_score,
         naturalness_score=evaluation.naturalness_score,
         fluency_score=evaluation.fluency_score,

@@ -48,7 +48,7 @@ export function LanguagePage() {
               <div className="module-icon" aria-hidden="true">{module.code === 'speaking' ? '◉' : '▤'}</div>
               <span className="module-status">{available ? 'Available now' : 'Coming soon'}</span>
               <h2>{module.name}</h2>
-              <p>{module.code === 'speaking' ? 'Translate prompts aloud and get detailed feedback on grammar, completeness, and pronunciation.' : 'Build comprehension with practical, level-based reading exercises.'}</p>
+              <p>{module.code === 'speaking' ? 'Translate prompts aloud and get detailed feedback on accuracy, grammar, naturalness, and fluency.' : 'Build comprehension with practical, level-based reading exercises.'}</p>
               {module.dimensions.length > 0 && (
                 <div className="dimension-tags">
                   {module.dimensions.map((dimension) => <span key={dimension.code}>{dimension.name}</span>)}

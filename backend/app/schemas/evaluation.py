@@ -15,7 +15,6 @@ class GeminiEvaluation(BaseModel):
         )
     )
     accuracy_score: int = Field(ge=0, le=100)
-    completeness_score: int = Field(ge=0, le=100)
     grammar_score: int = Field(ge=0, le=100)
     naturalness_score: int = Field(ge=0, le=100)
     fluency_score: int = Field(ge=0, le=100)
@@ -27,7 +26,6 @@ class GeminiEvaluation(BaseModel):
         """An invalid speaking attempt cannot carry contradictory positive scores."""
         if not self.is_valid_response:
             self.accuracy_score = 0
-            self.completeness_score = 0
             self.grammar_score = 0
             self.naturalness_score = 0
             self.fluency_score = 0
@@ -39,7 +37,6 @@ class EvaluationResponse(BaseModel):
     is_valid_response: bool
     recognized_translation: str
     accuracy_score: int
-    completeness_score: int
     grammar_score: int
     naturalness_score: int
     fluency_score: int

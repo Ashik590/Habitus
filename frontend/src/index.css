@@ -218,7 +218,7 @@ h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); }
 .overall-score.invalid strong, .overall-score.invalid > span { color: var(--danger); }
 .recognized-answer { display: flex; flex-direction: column; gap: 5px; margin-top: 14px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 12px; }
 .recognized-answer span { color: var(--muted); font-size: .78rem; font-weight: 750; text-transform: uppercase; letter-spacing: .08em; }
-.score-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 9px; margin: 14px 0; }
+.score-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; margin: 14px 0; }
 .score-grid div { display: flex; flex-direction: column; gap: 4px; padding: 14px 8px; border: 1px solid var(--line); border-radius: 10px; text-align: center; }
 .score-grid span { color: var(--muted); font-size: .74rem; }
 .score-grid strong { color: var(--ink); font-size: 1.25rem; }

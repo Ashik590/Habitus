@@ -57,7 +57,6 @@ export interface LevelStatistics {
 
 export interface DimensionAverages {
   accuracy: number | null
-  completeness: number | null
   grammar: number | null
   naturalness: number | null
   fluency: number | null
@@ -76,7 +75,6 @@ export interface EvaluationResponse {
   is_valid_response: boolean
   recognized_translation: string
   accuracy_score: number
-  completeness_score: number
   grammar_score: number
   naturalness_score: number
   fluency_score: number

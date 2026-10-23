@@ -87,7 +87,6 @@ async def get_my_statistics(
         await session.execute(
             select(
                 func.avg(UserSpeakingExercise.accuracy_score),
-                func.avg(UserSpeakingExercise.completeness_score),
                 func.avg(UserSpeakingExercise.grammar_score),
                 func.avg(UserSpeakingExercise.naturalness_score),
                 func.avg(UserSpeakingExercise.fluency_score),
@@ -131,9 +130,8 @@ async def get_my_statistics(
         level_scores=levels,
         dimension_averages=DimensionAverages(
             accuracy=optional_average(dimension_row[0]),
-            completeness=optional_average(dimension_row[1]),
-            grammar=optional_average(dimension_row[2]),
-            naturalness=optional_average(dimension_row[3]),
-            fluency=optional_average(dimension_row[4]),
+            grammar=optional_average(dimension_row[1]),
+            naturalness=optional_average(dimension_row[2]),
+            fluency=optional_average(dimension_row[3]),
         ),
     )
