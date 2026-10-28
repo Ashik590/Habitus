@@ -15,6 +15,7 @@ from app.core.security import (
 )
 from app.core.config import settings
 from app.db.session import get_database_session
+from app.models.language import Language
 from app.models.user import User
 from app.schemas.auth import AccessTokenResponse, LoginRequest
 from app.schemas.user import UserRegister, UserResponse
@@ -57,10 +58,23 @@ async def register_user(
             detail="An account with this email already exists.",
         )
 
+    native_language = await session.scalar(
+        select(Language).where(
+            Language.code == registration.native_language_code,
+            Language.is_active.is_(True),
+        )
+    )
+    if native_language is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="The selected native language is unavailable.",
+        )
+
     user = User(
         name=registration.name,
         email=registration.email,
         password_hash=hash_password(registration.password),
+        native_language_id=native_language.language_id,
     )
     session.add(user)
 
@@ -73,7 +87,7 @@ async def register_user(
             detail="An account with this email already exists.",
         ) from exc
 
-    await session.refresh(user)
+    await session.refresh(user, ["native_language"])
     return user
 
 

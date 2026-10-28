@@ -7,28 +7,28 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 
-class UserSpeakingExercise(Base):
-    __tablename__ = "user_speaking_exercises"
+class UserExercise(Base):
+    __tablename__ = "user_exercises"
     __table_args__ = (
         CheckConstraint(
             "accuracy_score BETWEEN 0 AND 100",
-            name="ck_user_speaking_exercises_accuracy_score",
+            name="ck_user_exercises_accuracy_score",
         ),
         CheckConstraint(
             "grammar_score BETWEEN 0 AND 100",
-            name="ck_user_speaking_exercises_grammar_score",
+            name="ck_user_exercises_grammar_score",
         ),
         CheckConstraint(
             "naturalness_score BETWEEN 0 AND 100",
-            name="ck_user_speaking_exercises_naturalness_score",
+            name="ck_user_exercises_naturalness_score",
         ),
         CheckConstraint(
             "fluency_score BETWEEN 0 AND 100",
-            name="ck_user_speaking_exercises_fluency_score",
+            name="ck_user_exercises_fluency_score",
         ),
         CheckConstraint(
             "overall_score BETWEEN 0 AND 100",
-            name="ck_user_speaking_exercises_overall_score",
+            name="ck_user_exercises_overall_score",
         ),
     )
 
@@ -38,7 +38,7 @@ class UserSpeakingExercise(Base):
     )
     exercise_id: Mapped[int] = mapped_column(
         BigInteger,
-        ForeignKey("speaking_exercises.exercise_id", ondelete="CASCADE"),
+        ForeignKey("exercises.exercise_id", ondelete="CASCADE"),
         primary_key=True,
     )
 
@@ -49,8 +49,8 @@ class UserSpeakingExercise(Base):
     overall_score: Mapped[Decimal] = mapped_column(Numeric(5, 2))
 
     user: Mapped["User"] = relationship(  # noqa: F821
-        back_populates="speaking_exercise_scores"
+        back_populates="exercise_scores"
     )
-    speaking_exercise: Mapped["SpeakingExercise"] = relationship(  # noqa: F821
+    exercise: Mapped["Exercise"] = relationship(  # noqa: F821
         back_populates="user_scores"
     )

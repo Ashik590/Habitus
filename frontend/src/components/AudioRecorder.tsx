@@ -5,7 +5,8 @@ import type { EvaluationResponse } from '../types/api'
 type RecorderStatus = 'active' | 'requesting' | 'recording' | 'evaluating' | 'complete' | 'expired'
 
 interface AudioRecorderProps {
-  languageCode: string
+  sourceCode: string
+  targetCode: string
   exerciseId: number
   timeLimitSeconds: number
   accessToken: string | null
@@ -25,7 +26,8 @@ function chooseMimeType() {
 }
 
 export function AudioRecorder({
-  languageCode,
+  sourceCode,
+  targetCode,
   exerciseId,
   timeLimitSeconds,
   accessToken,
@@ -120,7 +122,8 @@ export function AudioRecorder({
     updateStatus('evaluating')
     try {
       const evaluation = await api.evaluateExercise(
-        languageCode,
+        sourceCode,
+        targetCode,
         exerciseId,
         audio,
         feedbackLanguage,
@@ -275,7 +278,7 @@ export function AudioRecorder({
             <button className="button" type="button" onClick={handleReset}>
               Try Again
             </button>
-            <a className="button secondary" href={`/languages/${languageCode}/speaking/exercises`}>
+            <a className="button secondary" href={`/practice/${sourceCode}/${targetCode}/exercises`}>
               Back to Exercises
             </a>
           </div>
@@ -362,7 +365,7 @@ export function AudioRecorder({
             <button className="button" type="button" onClick={handleReset}>
               Practice Again
             </button>
-            <a className="button secondary" href={`/languages/${languageCode}/speaking/exercises`}>
+            <a className="button secondary" href={`/practice/${sourceCode}/${targetCode}/exercises`}>
               All Exercises
             </a>
           </div>

@@ -1,5 +1,3 @@
-from typing import Literal
-
 from pydantic import BaseModel
 
 from app.schemas.exercise import CEFRLevel
@@ -19,9 +17,9 @@ class DimensionAverages(BaseModel):
     fluency: float | None
 
 
-class SpeakingStatisticsResponse(BaseModel):
-    language: str
-    module: Literal["speaking"] = "speaking"
+class StatisticsResponse(BaseModel):
+    source_language: str
+    target_language: str
     exercises_completed: int
     level_scores: list[LevelStatistics]
     dimension_averages: DimensionAverages

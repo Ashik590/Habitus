@@ -2,20 +2,21 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { api } from '../lib/api'
-import type { CefrLevel, SpeakingExercise } from '../types/api'
+import type { CefrLevel, Exercise } from '../types/api'
 
 const levels: Array<CefrLevel | 'All'> = ['All', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const languageNames: Record<string, string> = {
+  bn: 'Bengali',
   en: 'English',
   de: 'German',
   es: 'Spanish',
 }
 
 export function ExercisesPage() {
-  const { languageCode = 'en' } = useParams()
+  const { sourceCode = 'bn', targetCode = 'en' } = useParams()
   const { accessToken, isInitializing } = useAuth()
   const [selectedLevel, setSelectedLevel] = useState<CefrLevel | 'All'>('All')
-  const [exercises, setExercises] = useState<SpeakingExercise[]>([])
+  const [exercises, setExercises] = useState<Exercise[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -26,7 +27,7 @@ export function ExercisesPage() {
     if (isInitializing) return
 
     let cancelled = false
-    api.getExercises(languageCode, accessToken, selectedLevel === 'All' ? undefined : selectedLevel, 0, 20)
+    api.getExercises(sourceCode, targetCode, accessToken, selectedLevel === 'All' ? undefined : selectedLevel, 0, 20)
       .then((response) => {
         if (!cancelled) {
           setExercises(response.items)
@@ -38,7 +39,7 @@ export function ExercisesPage() {
       })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
-  }, [accessToken, isInitializing, languageCode, selectedLevel])
+  }, [accessToken, isInitializing, selectedLevel, sourceCode, targetCode])
 
   async function handleLoadMore() {
     if (loadingMore || exercises.length >= total) return
@@ -46,7 +47,8 @@ export function ExercisesPage() {
     setLoadMoreError('')
     try {
       const response = await api.getExercises(
-        languageCode,
+        sourceCode,
+        targetCode,
         accessToken,
         selectedLevel === 'All' ? undefined : selectedLevel,
         exercises.length,
@@ -61,7 +63,7 @@ export function ExercisesPage() {
     }
   }
 
-  const [pendingExercise, setPendingExercise] = useState<SpeakingExercise | null>(null)
+  const [pendingExercise, setPendingExercise] = useState<Exercise | null>(null)
 
   function selectLevel(level: CefrLevel | 'All') {
     setLoading(true)
@@ -69,14 +71,15 @@ export function ExercisesPage() {
     setSelectedLevel(level)
   }
 
-  const currentLanguageName = languageNames[languageCode] ?? languageCode.toUpperCase()
+  const sourceLanguageName = languageNames[sourceCode] ?? sourceCode.toUpperCase()
+  const targetLanguageName = languageNames[targetCode] ?? targetCode.toUpperCase()
 
   return (
     <section>
       <div className="page-heading">
         <div>
-          <Link className="back-link" to={`/languages/${languageCode}`}>← Language overview</Link>
-          <p className="eyebrow page-kicker">{currentLanguageName} · Speaking</p>
+          <Link className="back-link" to="/practice">← Change languages</Link>
+          <p className="eyebrow page-kicker">{sourceLanguageName} → {targetLanguageName}</p>
           <h1>Exercises</h1>
           <p className="heading-copy">Select an exercise to test your spoken translation under calibrated time limits.</p>
         </div>
@@ -150,7 +153,7 @@ export function ExercisesPage() {
               </button>
               <Link
                 className="button"
-                to={`/languages/${languageCode}/speaking/exercises/${pendingExercise.exercise_id}`}
+                to={`/practice/${sourceCode}/${targetCode}/exercises/${pendingExercise.exercise_id}`}
                 onClick={() => setPendingExercise(null)}
               >
                 I'm Ready · Start

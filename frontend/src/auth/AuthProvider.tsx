@@ -74,8 +74,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function updateNativeLanguage(languageCode: string) {
+    if (!accessToken) throw new Error('Authentication is required.')
+    const updatedUser = await api.updateNativeLanguage(languageCode, accessToken)
+    setUser(updatedUser)
+  }
+
   return (
-    <AuthContext.Provider value={{ accessToken, user, isAuthenticated, isInitializing, login, logout }}>
+    <AuthContext.Provider value={{ accessToken, user, isAuthenticated, isInitializing, login, logout, updateNativeLanguage }}>
       {children}
     </AuthContext.Provider>
   )

@@ -3,41 +3,42 @@ import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { AudioRecorder } from '../components/AudioRecorder'
 import { api } from '../lib/api'
-import type { SpeakingExercise } from '../types/api'
+import type { Exercise } from '../types/api'
 
 const languageNames: Record<string, string> = {
+  bn: 'Bengali',
   en: 'English',
   de: 'German',
   es: 'Spanish',
 }
 
 export function ExercisePage() {
-  const { languageCode = 'en', exerciseId } = useParams()
+  const { sourceCode = 'bn', targetCode = 'en', exerciseId } = useParams()
   const { accessToken } = useAuth()
-  const [exercise, setExercise] = useState<SpeakingExercise | null>(null)
+  const [exercise, setExercise] = useState<Exercise | null>(null)
   const [error, setError] = useState('')
   const [isFinished, setIsFinished] = useState(false)
 
   useEffect(() => {
     if (!exerciseId) return
-    api.getExercise(languageCode, exerciseId, accessToken).then((loadedExercise) => {
+    api.getExercise(sourceCode, targetCode, exerciseId, accessToken).then((loadedExercise) => {
       setIsFinished(false)
       setError('')
       setExercise(loadedExercise)
     }).catch((requestError: unknown) => {
       setError(requestError instanceof Error ? requestError.message : 'Could not load this exercise.')
     })
-  }, [accessToken, exerciseId, languageCode])
+  }, [accessToken, exerciseId, sourceCode, targetCode])
 
   if (error) return <p className="status-message error">{error}</p>
   if (!exercise) return <p className="status-message">Loading exercise…</p>
 
-  const targetLanguageName = languageNames[languageCode] ?? languageCode.toUpperCase()
+  const targetLanguageName = languageNames[targetCode] ?? targetCode.toUpperCase()
 
   return (
     <section className="practice-card">
       <div className="practice-card-top">
-        <Link className="back-link" to={`/languages/${languageCode}/speaking/exercises`}>← All speaking exercises</Link>
+        <Link className="back-link" to={`/practice/${sourceCode}/${targetCode}/exercises`}>← All exercises</Link>
         <div className="practice-meta">
           <span className={`level-badge level-${exercise.level.toLowerCase()}`}>{exercise.level}</span>
           <span>{exercise.time_limit_seconds}s limit</span>
@@ -48,7 +49,7 @@ export function ExercisePage() {
       {!isFinished ? (
         <div className="active-prompt-area">
           <p className="eyebrow">Translate this sentence into spoken {targetLanguageName}</p>
-          <h1 lang="bn" className="bengali-prompt">{exercise.bengali_text}</h1>
+          <h1 className="bengali-prompt">{exercise.source_text}</h1>
         </div>
       ) : (
         <div className="finished-header">
@@ -58,7 +59,8 @@ export function ExercisePage() {
       )}
 
       <AudioRecorder
-        languageCode={languageCode}
+        sourceCode={sourceCode}
+        targetCode={targetCode}
         exerciseId={exercise.exercise_id}
         timeLimitSeconds={exercise.time_limit_seconds}
         accessToken={accessToken}

@@ -15,12 +15,12 @@ export function HomePage() {
           </div>
           <h1>Turn the language you know into language you speak effortlessly.</h1>
           <p className="hero-copy">
-            Habitus builds true conversational instinct with rapid Bengali-to-target spoken prompts,
+            Habitus builds true conversational instinct with rapid source-to-target spoken prompts,
             real-time phonetic evaluation, and precision CEFR milestones.
           </p>
           <div className="hero-actions">
-            <Link className="button" to="/languages">
-              Explore languages →
+            <Link className="button" to="/practice">
+              Start practising →
             </Link>
             {isAuthenticated ? (
               <Link className="button secondary" to="/profile">
@@ -116,9 +116,9 @@ export function HomePage() {
         <div className="how-it-works-grid">
           <article className="how-it-works-card">
             <div className="how-step-num">01</div>
-            <h3>See the Bengali Prompt</h3>
+            <h3>Read a Familiar Prompt</h3>
             <p>
-              Encounter natural everyday sentences in Bengali. Your brain must immediately synthesize the
+              Encounter natural everyday sentences in a language you know. Your brain must immediately synthesize the
               translation without multiple-choice crutches.
             </p>
           </article>
@@ -148,13 +148,13 @@ export function HomePage() {
             <p className="eyebrow">Available Languages</p>
             <h2>Choose your target language</h2>
           </div>
-          <Link className="back-link" to="/languages">
-            View all languages →
+          <Link className="back-link" to="/practice">
+            Choose your languages →
           </Link>
         </div>
 
         <div className="language-grid">
-          <Link className="language-card" to="/languages/en">
+          <Link className="language-card" to="/practice">
             <div>
               <div className="language-flag">🇬🇧</div>
               <h2>English</h2>
@@ -164,7 +164,7 @@ export function HomePage() {
             <div className="card-arrow">→</div>
           </Link>
 
-          <Link className="language-card" to="/languages/de">
+          <Link className="language-card" to="/practice">
             <div>
               <div className="language-flag">🇩🇪</div>
               <h2>German</h2>
@@ -174,7 +174,7 @@ export function HomePage() {
             <div className="card-arrow">→</div>
           </Link>
 
-          <Link className="language-card" to="/languages/es">
+          <Link className="language-card" to="/practice">
             <div>
               <div className="language-flag">🇪🇸</div>
               <h2>Spanish</h2>

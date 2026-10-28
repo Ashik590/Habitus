@@ -21,6 +21,14 @@ class Language(Base):
         server_default=text("true"),
     )
 
-    speaking_exercises: Mapped[list["SpeakingExercise"]] = relationship(  # noqa: F821
-        back_populates="language"
+    source_exercises: Mapped[list["Exercise"]] = relationship(  # noqa: F821
+        foreign_keys="Exercise.source_language_id",
+        back_populates="source_language",
+    )
+    target_exercises: Mapped[list["Exercise"]] = relationship(  # noqa: F821
+        foreign_keys="Exercise.target_language_id",
+        back_populates="target_language",
+    )
+    native_users: Mapped[list["User"]] = relationship(  # noqa: F821
+        back_populates="native_language"
     )

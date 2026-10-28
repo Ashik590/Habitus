@@ -1,4 +1,4 @@
-import type { AccessTokenResponse, CefrLevel, EvaluationResponse, Language, LearningModule, SpeakingExercise, SpeakingExerciseListResponse, SpeakingStatistics, User } from '../types/api'
+import type { AccessTokenResponse, CefrLevel, EvaluationResponse, Exercise, ExerciseListResponse, Language, Statistics, User } from '../types/api'
 
 // Keep the frontend and API on the same site in development so SameSite cookies work.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1'
@@ -76,7 +76,6 @@ async function request<T>(
 }
 
 let cachedLanguages: Promise<Language[]> | null = null
-let cachedModules: Promise<LearningModule[]> | null = null
 
 export const api = {
   getLanguages: () => {
@@ -88,17 +87,8 @@ export const api = {
     }
     return cachedLanguages
   },
-  getModules: () => {
-    if (!cachedModules) {
-      cachedModules = request<LearningModule[]>('/modules').catch((err) => {
-        cachedModules = null
-        throw err
-      })
-    }
-    return cachedModules
-  },
-  register: (name: string, email: string, password: string) => request<User>('/auth/register', {
-    method: 'POST', body: JSON.stringify({ name, email, password }),
+  register: (name: string, email: string, password: string, nativeLanguageCode: string) => request<User>('/auth/register', {
+    method: 'POST', body: JSON.stringify({ name, email, password, native_language_code: nativeLanguageCode }),
   }),
   login: (email: string, password: string) => request<AccessTokenResponse>('/auth/login', {
     method: 'POST', body: JSON.stringify({ email, password }),
@@ -108,8 +98,12 @@ export const api = {
   }),
   logout: () => request<void>('/auth/logout', { method: 'POST' }),
   getCurrentUser: (token: string) => request<User>('/users/me', {}, token),
+  updateNativeLanguage: (nativeLanguageCode: string, token: string) => request<User>('/users/me/native-language', {
+    method: 'PATCH', body: JSON.stringify({ native_language_code: nativeLanguageCode }),
+  }, token),
   getExercises: (
-    languageCode: string,
+    sourceCode: string,
+    targetCode: string,
     token?: string | null,
     level?: CefrLevel,
     offset = 0,
@@ -120,16 +114,17 @@ export const api = {
     if (offset > 0) params.append('offset', String(offset))
     if (limit !== 20) params.append('limit', String(limit))
     const query = params.toString() ? `?${params.toString()}` : ''
-    return request<SpeakingExerciseListResponse>(
-      `/languages/${languageCode}/speaking/exercises${query}`,
+    return request<ExerciseListResponse>(
+      `/practice/${sourceCode}/${targetCode}/exercises${query}`,
       {},
       token,
     )
   },
-  getExercise: (languageCode: string, id: string, token?: string | null) => request<SpeakingExercise>(`/languages/${languageCode}/speaking/exercises/${id}`, {}, token),
-  getStatistics: (languageCode: string, token: string) => request<SpeakingStatistics>(`/users/me/languages/${languageCode}/speaking/statistics`, {}, token),
+  getExercise: (sourceCode: string, targetCode: string, id: string, token?: string | null) => request<Exercise>(`/practice/${sourceCode}/${targetCode}/exercises/${id}`, {}, token),
+  getStatistics: (sourceCode: string, targetCode: string, token: string) => request<Statistics>(`/users/me/practice/${sourceCode}/${targetCode}/statistics`, {}, token),
   evaluateExercise: (
-    languageCode: string,
+    sourceCode: string,
+    targetCode: string,
     exerciseId: number,
     audio: Blob,
     feedbackLanguage: 'en' | 'bn',
@@ -139,7 +134,7 @@ export const api = {
     const form = new FormData()
     form.append('audio', audio, `answer.${extension}`)
     form.append('feedback_language', feedbackLanguage)
-    return request<EvaluationResponse>(`/languages/${languageCode}/speaking/exercises/${exerciseId}/evaluate`, {
+    return request<EvaluationResponse>(`/practice/${sourceCode}/${targetCode}/exercises/${exerciseId}/evaluate`, {
       method: 'POST',
       body: form,
     }, token)

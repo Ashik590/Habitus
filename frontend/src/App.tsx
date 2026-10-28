@@ -5,7 +5,6 @@ import { AboutPage } from './pages/AboutPage'
 import { ExercisePage } from './pages/ExercisePage'
 import { ExercisesPage } from './pages/ExercisesPage'
 import { HomePage } from './pages/HomePage'
-import { LanguagePage } from './pages/LanguagePage'
 import { LanguagesPage } from './pages/LanguagesPage'
 import { LoginPage } from './pages/LoginPage'
 import { ProfilePage } from './pages/ProfilePage'
@@ -17,10 +16,10 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<HomePage />} />
         <Route path="about" element={<AboutPage />} />
-        <Route path="languages" element={<LanguagesPage />} />
-        <Route path="languages/:languageCode" element={<LanguagePage />} />
-        <Route path="languages/:languageCode/speaking/exercises" element={<ExercisesPage />} />
-        <Route path="languages/:languageCode/speaking/exercises/:exerciseId" element={<ExercisePage />} />
+        <Route path="practice" element={<LanguagesPage />} />
+        <Route path="practice/:sourceCode/:targetCode/exercises" element={<ExercisesPage />} />
+        <Route path="practice/:sourceCode/:targetCode/exercises/:exerciseId" element={<ExercisePage />} />
+        <Route path="languages" element={<Navigate to="/practice" replace />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
         <Route element={<ProtectedRoute />}>

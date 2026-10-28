@@ -19,10 +19,10 @@ export function AboutPage() {
       <section className="motto-showcase">
         <div className="motto-badge">Our Guiding Motto</div>
         <blockquote className="motto-quote">
-          “Learning and practicing languages for a Bengali person through real-world exercises.”
+          “Build spoken fluency by translating from a language you know into one you are learning.”
         </blockquote>
         <p className="motto-subtext">
-          Tailored specifically to bridge the grammatical and phonetic shifts from Bengali to English, German, and Spanish.
+          Designed to bridge grammatical and expressive differences between many source and target languages.
         </p>
       </section>
 
@@ -59,38 +59,38 @@ export function AboutPage() {
         </div>
       </section>
 
-      {/* Upcoming Modules Vision */}
+      {/* Future Practice Vision */}
       <section className="about-section">
         <div className="section-title-wrap">
           <p className="eyebrow">The Horizon</p>
-          <h2>Modules Coming in the Near Future</h2>
+          <h2>Practice Experiences Coming in the Near Future</h2>
           <p className="section-lead-copy">
-            Speaking is only the beginning. We are actively developing a suite of specialized learning modules exclusively designed to help Bengali speakers acquire new languages substantially faster:
+            Timed spoken translation is our current focus. Future practice experiences can broaden how learners build real-world language confidence:
           </p>
         </div>
-        <div className="upcoming-modules-grid">
-          <div className="upcoming-module-card">
+        <div className="upcoming-practice-grid">
+          <div className="upcoming-practice-card">
             <span className="upcoming-tag">Coming Soon</span>
             <div className="upcoming-icon">💬</div>
             <h3>Real-World Conversation Scenarios</h3>
             <p>Interactive situational dialogues simulating visa interviews, workplace meetings, academic seminars, and casual dinners abroad.</p>
           </div>
 
-          <div className="upcoming-module-card">
+          <div className="upcoming-practice-card">
             <span className="upcoming-tag">Coming Soon</span>
             <div className="upcoming-icon">🎧</div>
             <h3>Accent & Native Audio Dictation</h3>
             <p>Sharpen ear-to-brain processing with native spoken accents, connected speech, elisions, and rapid comprehension drills.</p>
           </div>
 
-          <div className="upcoming-module-card">
+          <div className="upcoming-practice-card">
             <span className="upcoming-tag">Coming Soon</span>
             <div className="upcoming-icon">🧠</div>
             <h3>Speed Collocation & Idiom Sprint</h3>
             <p>Timed high-speed drills focused on multi-word verbs, natural collocations, and prepositions that don't directly translate into Bengali.</p>
           </div>
 
-          <div className="upcoming-module-card">
+          <div className="upcoming-practice-card">
             <span className="upcoming-tag">Coming Soon</span>
             <div className="upcoming-icon">✍️</div>
             <h3>Contextual Writing & Composition</h3>
@@ -133,8 +133,8 @@ export function AboutPage() {
           <h2>Ready to transform your spoken fluency?</h2>
           <p>Select your target language, test your spoken recall against calibrated timers, and see instant AI diagnostic feedback.</p>
           <div className="button-row" style={{ justifyContent: 'center', marginTop: '24px' }}>
-            <Link className="button" to="/languages">
-              Explore Languages & Exercises →
+            <Link className="button" to="/practice">
+              Choose Languages & Exercises →
             </Link>
             {!user && (
               <Link className="button secondary" to="/register">

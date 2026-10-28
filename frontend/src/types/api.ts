@@ -6,25 +6,12 @@ export interface Language {
   bengali_name: string
 }
 
-export interface Dimension {
-  code: string
-  name: string
-  bengali_name: string
-  display_order: number
-}
-
-export interface LearningModule {
-  code: string
-  name: string
-  bengali_name: string
-  dimensions: Dimension[]
-}
-
 export interface User {
   user_id: string
   name: string
   email: string
   is_active: boolean
+  native_language: Language
 }
 
 export interface AccessTokenResponse {
@@ -32,17 +19,17 @@ export interface AccessTokenResponse {
   token_type: string
 }
 
-export interface SpeakingExercise {
+export interface Exercise {
   exercise_id: number
   level: CefrLevel
-  bengali_text: string
+  source_text: string
   time_limit_seconds: number
   completed: boolean
   overall_score: number | null
 }
 
-export interface SpeakingExerciseListResponse {
-  items: SpeakingExercise[]
+export interface ExerciseListResponse {
+  items: Exercise[]
   total: number
   limit: number
   offset: number
@@ -62,9 +49,9 @@ export interface DimensionAverages {
   fluency: number | null
 }
 
-export interface SpeakingStatistics {
-  language: string
-  module: 'speaking'
+export interface Statistics {
+  source_language: string
+  target_language: string
   exercises_completed: number
   level_scores: LevelStatistics[]
   dimension_averages: DimensionAverages

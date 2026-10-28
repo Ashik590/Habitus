@@ -9,10 +9,10 @@ from sqlalchemy.orm import joinedload
 
 from app.api.dependencies.auth import get_optional_current_user
 from app.db.session import get_database_session
-from app.models.exercise import SpeakingExercise
-from app.models.language import Language
+from app.api.routes.exercises import enforce_native_language, resolve_language_pair
+from app.models.exercise import Exercise
 from app.models.user import User
-from app.models.user_exercise import UserSpeakingExercise
+from app.models.user_exercise import UserExercise
 from app.schemas.evaluation import (
     EvaluationResponse,
     FeedbackLanguage,
@@ -22,8 +22,8 @@ from app.services.gemini_evaluation import EvaluationServiceError, evaluate_audi
 
 
 router = APIRouter(
-    prefix="/languages/{language_code}/speaking/exercises",
-    tags=["Speaking Evaluations"],
+    prefix="/practice/{source_code}/{target_code}/exercises",
+    tags=["Evaluations"],
 )
 
 MAX_AUDIO_SIZE_BYTES = 10 * 1024 * 1024
@@ -56,7 +56,7 @@ def calculate_overall_score(evaluation: GeminiEvaluation) -> Decimal:
 async def save_authenticated_result(
     session: AsyncSession,
     user: User,
-    exercise: SpeakingExercise,
+    exercise: Exercise,
     evaluation: GeminiEvaluation,
     overall_score: Decimal,
 ) -> None:
@@ -75,11 +75,11 @@ async def save_authenticated_result(
         if key not in {"user_id", "exercise_id"}
     }
 
-    statement = insert(UserSpeakingExercise).values(**values)
+    statement = insert(UserExercise).values(**values)
     statement = statement.on_conflict_do_update(
         index_elements=[
-            UserSpeakingExercise.user_id,
-            UserSpeakingExercise.exercise_id,
+            UserExercise.user_id,
+            UserExercise.exercise_id,
         ],
         set_=score_columns,
     )
@@ -90,22 +90,27 @@ async def save_authenticated_result(
 
 @router.post("/{exercise_id}/evaluate", response_model=EvaluationResponse)
 async def evaluate_exercise(
-    language_code: str,
+    source_code: str,
+    target_code: str,
     exercise_id: int,
     audio: Annotated[UploadFile, File(description="The learner's recorded answer")],
     feedback_language: Annotated[FeedbackLanguage, Form()] = "en",
     session: AsyncSession = Depends(get_database_session),
     current_user: User | None = Depends(get_optional_current_user),
 ) -> EvaluationResponse:
+    source, target = await resolve_language_pair(session, source_code, target_code)
+    enforce_native_language(current_user, source)
     exercise = await session.scalar(
-        select(SpeakingExercise)
-        .join(Language)
-        .options(joinedload(SpeakingExercise.language))
+        select(Exercise)
+        .options(
+            joinedload(Exercise.source_language),
+            joinedload(Exercise.target_language),
+        )
         .where(
-            SpeakingExercise.exercise_id == exercise_id,
-            SpeakingExercise.is_active.is_(True),
-            Language.code == language_code,
-            Language.is_active.is_(True),
+            Exercise.exercise_id == exercise_id,
+            Exercise.source_language_id == source.language_id,
+            Exercise.target_language_id == target.language_id,
+            Exercise.is_active.is_(True),
         )
     )
     if exercise is None:

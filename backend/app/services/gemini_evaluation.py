@@ -19,7 +19,7 @@ import numpy as np
 from pydantic import ValidationError
 
 from app.core.config import settings
-from app.models.exercise import SpeakingExercise
+from app.models.exercise import Exercise
 from app.schemas.evaluation import FeedbackLanguage, GeminiEvaluation
 
 
@@ -428,7 +428,7 @@ def _clean_transcription(text: str) -> str:
 
 
 def build_evaluation_prompt(
-    exercise: SpeakingExercise,
+    exercise: Exercise,
     transcribed_text: str,
     feedback_language: FeedbackLanguage,
 ) -> str:
@@ -437,11 +437,12 @@ def build_evaluation_prompt(
     references = "\n".join(
         f"- {solution}" for solution in exercise.preferred_solutions
     )
-    target_language = exercise.language.name
+    source_language = exercise.source_language.name
+    target_language = exercise.target_language.name
 
     return f"""
 You are a strict, impartial language examiner evaluating a learner's
-spoken {target_language} translation of a Bengali sentence.
+spoken {target_language} translation of a {source_language} sentence.
 
 CORE EXAMINER PRINCIPLE:
 Evaluate the learner's actual response objectively. Do not inflate
@@ -455,7 +456,7 @@ Evaluate each scoring dimension independently. Do not allow a high
 or low score in one dimension to automatically influence another.
 
 SOURCE SENTENCE:
-{exercise.bengali_text}
+{exercise.source_text}
 
 CEFR LEVEL:
 {exercise.level}
@@ -965,7 +966,7 @@ dimension scores are mutually consistent.
 
 
 def _evaluate_audio_sync(
-    exercise: SpeakingExercise,
+    exercise: Exercise,
     audio_bytes: bytes,
     mime_type: str,
     feedback_language: FeedbackLanguage,
@@ -978,8 +979,8 @@ def _evaluate_audio_sync(
         mime_type,
     )
 
-    target_language_code = exercise.language.code
-    target_language_name = exercise.language.name
+    target_language_code = exercise.target_language.code
+    target_language_name = exercise.target_language.name
 
     # Step 1: Local Whisper transcription on CPU (~300ms)
     logger.info("Step 1: Running local Whisper transcription for '%s'...", target_language_name)
@@ -991,7 +992,7 @@ def _evaluate_audio_sync(
     if not cleaned_transcript:
         logger.info("Short-circuiting: No speech recognized by Whisper. Returning 0 scores with ZERO Gemini calls.")
         feedback = (
-            f"কোনো স্পষ্ট {exercise.language.bengali_name} কথা শনাক্ত করা যায়নি। দয়া করে স্পষ্টভাবে বলুন।"
+            f"কোনো স্পষ্ট {exercise.target_language.bengali_name} কথা শনাক্ত করা যায়নি। দয়া করে স্পষ্টভাবে বলুন।"
             if feedback_language == "bn"
             else f"No clear {target_language_name} speech was detected. Please speak clearly and try again."
         )
@@ -1038,7 +1039,7 @@ def _evaluate_audio_sync(
 
 
 async def evaluate_audio(
-    exercise: SpeakingExercise,
+    exercise: Exercise,
     audio_bytes: bytes,
     mime_type: str,
     feedback_language: FeedbackLanguage,

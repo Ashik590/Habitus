@@ -3,7 +3,9 @@ from uuid import UUID
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.security import decode_token
 from app.db.session import get_database_session
@@ -36,7 +38,11 @@ async def get_current_user(
     except (jwt.InvalidTokenError, KeyError, TypeError, ValueError) as exc:
         raise authentication_error() from exc
 
-    user = await session.get(User, user_id)
+    user = await session.scalar(
+        select(User)
+        .options(selectinload(User.native_language))
+        .where(User.user_id == user_id)
+    )
     if user is None or not user.is_active:
         raise authentication_error("User is inactive or no longer exists.")
 
@@ -61,7 +67,11 @@ async def get_optional_current_user(
     except (jwt.InvalidTokenError, KeyError, TypeError, ValueError) as exc:
         raise authentication_error() from exc
 
-    user = await session.get(User, user_id)
+    user = await session.scalar(
+        select(User)
+        .options(selectinload(User.native_language))
+        .where(User.user_id == user_id)
+    )
     if user is None or not user.is_active:
         raise authentication_error("User is inactive or no longer exists.")
 

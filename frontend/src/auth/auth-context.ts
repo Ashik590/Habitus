@@ -8,6 +8,7 @@ export interface AuthContextValue {
   isInitializing: boolean
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
+  updateNativeLanguage: (languageCode: string) => Promise<void>
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)
