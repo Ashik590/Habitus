@@ -11,6 +11,7 @@ export interface User {
   name: string
   email: string
   is_active: boolean
+  profile_picture_url: string | null
   native_language: Language
 }
 

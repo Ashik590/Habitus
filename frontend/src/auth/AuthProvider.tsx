@@ -80,8 +80,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(updatedUser)
   }
 
+  async function updateProfilePicture(picture: File) {
+    if (!accessToken) throw new Error('Authentication is required.')
+    const updatedUser = await api.uploadProfilePicture(picture, accessToken)
+    setUser(updatedUser)
+  }
+
+  async function removeProfilePicture() {
+    if (!accessToken) throw new Error('Authentication is required.')
+    const updatedUser = await api.removeProfilePicture(accessToken)
+    setUser(updatedUser)
+  }
+
   return (
-    <AuthContext.Provider value={{ accessToken, user, isAuthenticated, isInitializing, login, logout, updateNativeLanguage }}>
+    <AuthContext.Provider value={{
+      accessToken,
+      user,
+      isAuthenticated,
+      isInitializing,
+      login,
+      logout,
+      updateNativeLanguage,
+      updateProfilePicture,
+      removeProfilePicture,
+    }}>
       {children}
     </AuthContext.Provider>
   )

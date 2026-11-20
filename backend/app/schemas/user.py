@@ -1,3 +1,4 @@
+import unicodedata
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
@@ -15,8 +16,29 @@ class UserRegister(BaseModel):
     @classmethod
     def normalize_name(cls, value: str) -> str:
         normalized_name = " ".join(value.split())
-        if len(normalized_name) < 2:
-            raise ValueError("Name must contain at least two visible characters.")
+        allowed_punctuation = {" ", "'", "’", ".", "-"}
+        letters = [
+            character
+            for character in normalized_name
+            if unicodedata.category(character).startswith("L")
+        ]
+        has_invalid_character = any(
+            not (
+                unicodedata.category(character).startswith(("L", "M"))
+                or character in allowed_punctuation
+            )
+            for character in normalized_name
+        )
+        if (
+            len(letters) < 2
+            or has_invalid_character
+            or not unicodedata.category(normalized_name[0]).startswith("L")
+            or not unicodedata.category(normalized_name[-1]).startswith(("L", "M"))
+        ):
+            raise ValueError(
+                "Enter a valid name using letters, spaces, apostrophes, periods, "
+                "or hyphens."
+            )
         return normalized_name
 
     @field_validator("email", mode="after")
@@ -37,6 +59,7 @@ class UserResponse(BaseModel):
     name: str
     email: EmailStr
     is_active: bool
+    profile_picture_url: str | None
     native_language: LanguagePublic
 
 

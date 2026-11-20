@@ -9,6 +9,8 @@ export interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
   updateNativeLanguage: (languageCode: string) => Promise<void>
+  updateProfilePicture: (picture: File) => Promise<void>
+  removeProfilePicture: () => Promise<void>
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

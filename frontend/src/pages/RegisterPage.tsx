@@ -3,6 +3,21 @@ import { Link, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import type { Language } from '../types/api'
 
+const VALID_NAME_CHARACTERS = /^[\p{L}\p{M} .'’-]+$/u
+
+function normalizeName(value: string) {
+  return value.trim().replace(/\s+/g, ' ')
+}
+
+function isValidName(value: string) {
+  const normalizedName = normalizeName(value)
+  const letterCount = normalizedName.match(/\p{L}/gu)?.length ?? 0
+  return letterCount >= 2
+    && VALID_NAME_CHARACTERS.test(normalizedName)
+    && /^\p{L}/u.test(normalizedName)
+    && /[\p{L}\p{M}]$/u.test(normalizedName)
+}
+
 export function RegisterPage() {
   const navigate = useNavigate()
   const [name, setName] = useState('')
@@ -21,10 +36,15 @@ export function RegisterPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
+    const normalizedName = normalizeName(name)
+    if (!isValidName(normalizedName)) {
+      setError('Enter a valid name using letters, spaces, apostrophes, periods, or hyphens.')
+      return
+    }
     setSubmitting(true)
     setError('')
     try {
-      await api.register(name, email, password, nativeLanguageCode)
+      await api.register(normalizedName, email, password, nativeLanguageCode)
       navigate('/login', { replace: true })
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Registration failed.')
@@ -35,9 +55,9 @@ export function RegisterPage() {
     <section className="form-card">
       <p className="eyebrow">Track your progress</p><h1>Create account</h1>
       <form onSubmit={handleSubmit}>
-        <label>Name<input value={name} onChange={(event) => setName(event.target.value)} minLength={2} required /></label>
-        <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
-        <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} required /></label>
+        <label>Name<input value={name} onChange={(event) => setName(event.target.value)} minLength={2} maxLength={100} autoComplete="name" required /></label>
+        <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required /></label>
+        <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={128} autoComplete="new-password" required /></label>
         <label>
           Native language
           <select value={nativeLanguageCode} onChange={(event) => setNativeLanguageCode(event.target.value)} required>

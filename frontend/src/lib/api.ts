@@ -3,6 +3,14 @@ import type { AccessTokenResponse, CefrLevel, EvaluationResponse, Exercise, Exer
 // Keep the frontend and API on the same site in development so SameSite cookies work.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1'
 
+export function resolveMediaUrl(path: string) {
+  if (/^https?:\/\//i.test(path)) return path
+  const origin = API_BASE_URL.startsWith('http')
+    ? new URL(API_BASE_URL).origin
+    : window.location.origin
+  return `${origin}${path.startsWith('/') ? path : `/${path}`}`
+}
+
 export class ApiError extends Error {
   status: number
   retryAfterSeconds: number | null
@@ -58,8 +66,17 @@ async function request<T>(
   if (!response.ok) {
     let message = `Request failed with status ${response.status}.`
     try {
-      const body = (await response.json()) as { detail?: string }
-      if (body.detail) message = body.detail
+      const body = (await response.json()) as {
+        detail?: string | Array<{ msg?: string }>
+      }
+      if (typeof body.detail === 'string') {
+        message = body.detail
+      } else if (Array.isArray(body.detail)) {
+        const validationMessage = body.detail.find((item) => item.msg)?.msg
+        if (validationMessage) {
+          message = validationMessage.replace(/^Value error,\s*/i, '')
+        }
+      }
     } catch {
       // The server did not return a JSON error body.
     }
@@ -100,6 +117,17 @@ export const api = {
   getCurrentUser: (token: string) => request<User>('/users/me', {}, token),
   updateNativeLanguage: (nativeLanguageCode: string, token: string) => request<User>('/users/me/native-language', {
     method: 'PATCH', body: JSON.stringify({ native_language_code: nativeLanguageCode }),
+  }, token),
+  uploadProfilePicture: (picture: File, token: string) => {
+    const form = new FormData()
+    form.append('picture', picture, picture.name)
+    return request<User>('/users/me/profile-picture', {
+      method: 'POST',
+      body: form,
+    }, token)
+  },
+  removeProfilePicture: (token: string) => request<User>('/users/me/profile-picture', {
+    method: 'DELETE',
   }, token),
   getExercises: (
     sourceCode: string,

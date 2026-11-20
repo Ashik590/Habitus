@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title description">
+  <title id="title">Default profile picture</title>
+  <desc id="description">A neutral person silhouette on a warm rose background</desc>
+  <defs>
+    <linearGradient id="background" x1="24" y1="16" x2="140" y2="150" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8E9ED"/>
+      <stop offset="1" stop-color="#E7CCD6"/>
+    </linearGradient>
+    <linearGradient id="silhouette" x1="57" y1="45" x2="112" y2="137" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#A34B66"/>
+      <stop offset="1" stop-color="#752940"/>
+    </linearGradient>
+  </defs>
+  <rect width="160" height="160" rx="36" fill="url(#background)"/>
+  <circle cx="80" cy="61" r="27" fill="url(#silhouette)"/>
+  <path d="M31 145c2-33 21-53 49-53s47 20 49 53H31Z" fill="url(#silhouette)"/>
+  <circle cx="127" cy="31" r="14" fill="#FFFDFB" fill-opacity=".55"/>
+  <circle cx="33" cy="38" r="8" fill="#FFFDFB" fill-opacity=".35"/>
+</svg>

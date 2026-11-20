@@ -18,6 +18,10 @@ class User(Base):
         index=True,
     )
     password_hash: Mapped[str] = mapped_column(String(255))
+    profile_picture_url: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         default=True,

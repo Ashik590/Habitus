@@ -1,17 +1,26 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ChangeEvent } from 'react'
 import { Link } from 'react-router-dom'
+import defaultProfileAvatar from '../assets/default-profile-avatar.svg'
 import { useAuth } from '../auth/useAuth'
 import { ScoreBar } from '../components/ScoreBar'
-import { api } from '../lib/api'
+import { api, resolveMediaUrl } from '../lib/api'
 import type { Language, Statistics } from '../types/api'
 
 export function ProfilePage() {
-  const { accessToken, user, updateNativeLanguage } = useAuth()
+  const {
+    accessToken,
+    user,
+    updateNativeLanguage,
+    updateProfilePicture,
+    removeProfilePicture,
+  } = useAuth()
   const [languages, setLanguages] = useState<Language[]>([])
   const [languageCode, setLanguageCode] = useState('en')
   const [statistics, setStatistics] = useState<Statistics | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [pictureError, setPictureError] = useState('')
+  const [updatingPicture, setUpdatingPicture] = useState(false)
 
   useEffect(() => {
     api.getLanguages().then(setLanguages).catch(() => undefined)
@@ -37,6 +46,10 @@ export function ProfilePage() {
   }, [accessToken, selectedTargetCode, user])
 
   const selectedLanguage = languages.find((language) => language.code === selectedTargetCode)
+  const profilePictureUrl = user?.profile_picture_url
+    ? resolveMediaUrl(user.profile_picture_url)
+    : defaultProfileAvatar
+  const hasCustomProfilePicture = Boolean(user?.profile_picture_url)
   const totalExercises = statistics?.level_scores.reduce(
     (total, level) => total + level.exercises_available,
     0,
@@ -73,6 +86,46 @@ export function ProfilePage() {
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Could not update native language.')
       setLoading(false)
+    }
+  }
+
+  async function handleProfilePictureChange(event: ChangeEvent<HTMLInputElement>) {
+    const picture = event.target.files?.[0]
+    event.target.value = ''
+    if (!picture) return
+    if (picture.size > 5 * 1024 * 1024) {
+      setPictureError('Choose an image that is 5 MB or smaller.')
+      return
+    }
+
+    setUpdatingPicture(true)
+    setPictureError('')
+    try {
+      await updateProfilePicture(picture)
+    } catch (requestError) {
+      setPictureError(
+        requestError instanceof Error
+          ? requestError.message
+          : 'Could not update your profile picture.',
+      )
+    } finally {
+      setUpdatingPicture(false)
+    }
+  }
+
+  async function handleProfilePictureRemoval() {
+    setUpdatingPicture(true)
+    setPictureError('')
+    try {
+      await removeProfilePicture()
+    } catch (requestError) {
+      setPictureError(
+        requestError instanceof Error
+          ? requestError.message
+          : 'Could not remove your profile picture.',
+      )
+    } finally {
+      setUpdatingPicture(false)
     }
   }
 
@@ -185,7 +238,7 @@ export function ProfilePage() {
           <div className="personal-info-card">
             <div className="personal-hero">
               <div className="user-avatar" aria-hidden="true">
-                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                <img src={profilePictureUrl} alt="" />
               </div>
               <div>
                 <span className="account-status">Active learner</span>
@@ -193,6 +246,38 @@ export function ProfilePage() {
                 <p>Personal account</p>
               </div>
             </div>
+            <div className="profile-photo-control">
+              <div>
+                <strong>Profile picture</strong>
+                <span>JPEG, PNG, or WebP · 5 MB maximum</span>
+              </div>
+              <div className="profile-photo-actions">
+                <label className="profile-photo-button">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={(event) => void handleProfilePictureChange(event)}
+                    disabled={updatingPicture}
+                  />
+                  {updatingPicture
+                    ? 'Updating…'
+                    : hasCustomProfilePicture ? 'Change' : 'Upload'}
+                </label>
+                {hasCustomProfilePicture && (
+                  <button
+                    className="profile-photo-remove"
+                    type="button"
+                    onClick={() => void handleProfilePictureRemoval()}
+                    disabled={updatingPicture}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
+            {pictureError && (
+              <p className="profile-photo-error" role="alert">{pictureError}</p>
+            )}
             <dl className="info-list">
               <div className="info-item">
                 <dt>Full name</dt>

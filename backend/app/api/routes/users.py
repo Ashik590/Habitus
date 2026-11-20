@@ -1,9 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import Annotated
+from uuid import uuid4
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies.auth import get_current_user
 from app.api.routes.exercises import resolve_language_pair
+from app.core.uploads import (
+    MAX_PROFILE_PICTURE_SIZE_BYTES,
+    PROFILE_PICTURE_DIRECTORY,
+    PROFILE_PICTURE_URL_PREFIX,
+    delete_profile_picture,
+    detect_profile_picture_extension,
+)
 from app.db.session import get_database_session
 from app.models.exercise import Exercise
 from app.models.language import Language
@@ -43,6 +53,73 @@ async def update_native_language(
     current_user.native_language_id = language.language_id
     current_user.native_language = language
     await session.commit()
+    return current_user
+
+
+@router.post("/me/profile-picture", response_model=UserResponse)
+async def upload_profile_picture(
+    picture: Annotated[
+        UploadFile,
+        File(description="A JPEG, PNG, or WebP profile picture up to 5 MB"),
+    ],
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_database_session),
+) -> User:
+    content = await picture.read(MAX_PROFILE_PICTURE_SIZE_BYTES + 1)
+    await picture.close()
+
+    if not content:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Choose a non-empty image file.",
+        )
+    if len(content) > MAX_PROFILE_PICTURE_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Profile pictures must be 5 MB or smaller.",
+        )
+
+    extension = detect_profile_picture_extension(content)
+    if extension is None:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Profile pictures must be JPEG, PNG, or WebP images.",
+        )
+
+    filename = f"{current_user.user_id.hex}-{uuid4().hex}.{extension}"
+    destination = PROFILE_PICTURE_DIRECTORY / filename
+    previous_picture_url = current_user.profile_picture_url
+    current_user.profile_picture_url = f"{PROFILE_PICTURE_URL_PREFIX}/{filename}"
+
+    try:
+        PROFILE_PICTURE_DIRECTORY.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(content)
+        await session.commit()
+    except OSError as exc:
+        await session.rollback()
+        destination.unlink(missing_ok=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="The profile picture could not be stored.",
+        ) from exc
+    except Exception:
+        await session.rollback()
+        destination.unlink(missing_ok=True)
+        raise
+
+    delete_profile_picture(previous_picture_url)
+    return current_user
+
+
+@router.delete("/me/profile-picture", response_model=UserResponse)
+async def remove_profile_picture(
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_database_session),
+) -> User:
+    previous_picture_url = current_user.profile_picture_url
+    current_user.profile_picture_url = None
+    await session.commit()
+    delete_profile_picture(previous_picture_url)
     return current_user
 
 
