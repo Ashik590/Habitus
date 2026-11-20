@@ -27,6 +27,12 @@ class Settings(BaseSettings):
 
     whisper_model: str = "tiny"
 
+    frontend_dist_dir: str | None = None
+    profile_picture_storage: Literal["local", "supabase"] = "local"
+    supabase_url: str | None = None
+    supabase_service_role_key: str | None = None
+    supabase_storage_bucket: str = "profile-pictures"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

@@ -35,6 +35,7 @@ pnpm-debug.log*
 
 # User-uploaded media
 backend/uploads/
+backend/catalog-export.json
 
 # OS and Editor files
 .DS_Store

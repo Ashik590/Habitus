@@ -1,0 +1,11 @@
+.git
+**/.env
+**/.env.*
+**/.venv
+**/node_modules
+**/__pycache__
+**/*.pyc
+frontend/dist
+backend/uploads
+backend/catalog-export.json
+*.log

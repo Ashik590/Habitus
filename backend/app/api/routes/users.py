@@ -2,6 +2,7 @@ from typing import Annotated
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+import httpx
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,10 +10,9 @@ from app.api.dependencies.auth import get_current_user
 from app.api.routes.exercises import resolve_language_pair
 from app.core.uploads import (
     MAX_PROFILE_PICTURE_SIZE_BYTES,
-    PROFILE_PICTURE_DIRECTORY,
-    PROFILE_PICTURE_URL_PREFIX,
-    delete_profile_picture,
     detect_profile_picture_extension,
+    remove_stored_profile_picture,
+    store_profile_picture,
 )
 from app.db.session import get_database_session
 from app.models.exercise import Exercise
@@ -87,27 +87,26 @@ async def upload_profile_picture(
         )
 
     filename = f"{current_user.user_id.hex}-{uuid4().hex}.{extension}"
-    destination = PROFILE_PICTURE_DIRECTORY / filename
     previous_picture_url = current_user.profile_picture_url
-    current_user.profile_picture_url = f"{PROFILE_PICTURE_URL_PREFIX}/{filename}"
+    new_picture_url: str | None = None
 
     try:
-        PROFILE_PICTURE_DIRECTORY.mkdir(parents=True, exist_ok=True)
-        destination.write_bytes(content)
+        new_picture_url = await store_profile_picture(filename, content, extension)
+        current_user.profile_picture_url = new_picture_url
         await session.commit()
-    except OSError as exc:
+    except (OSError, httpx.HTTPError, RuntimeError) as exc:
         await session.rollback()
-        destination.unlink(missing_ok=True)
+        await remove_stored_profile_picture(new_picture_url)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="The profile picture could not be stored.",
         ) from exc
     except Exception:
         await session.rollback()
-        destination.unlink(missing_ok=True)
+        await remove_stored_profile_picture(new_picture_url)
         raise
 
-    delete_profile_picture(previous_picture_url)
+    await remove_stored_profile_picture(previous_picture_url)
     return current_user
 
 
@@ -119,7 +118,7 @@ async def remove_profile_picture(
     previous_picture_url = current_user.profile_picture_url
     current_user.profile_picture_url = None
     await session.commit()
-    delete_profile_picture(previous_picture_url)
+    await remove_stored_profile_picture(previous_picture_url)
     return current_user
 
 
