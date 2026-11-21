@@ -22,8 +22,6 @@ class Settings(BaseSettings):
     gemini_api_key: str | None = None
     gemini_model: str = "gemini-2.5-flash"
 
-    whisper_model: str = "tiny"
-
     frontend_dist_dir: str | None = None
     profile_picture_storage: Literal["local", "supabase"] = "local"
     supabase_url: str | None = None

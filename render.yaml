@@ -28,7 +28,5 @@ services:
         value: "true"
       - key: REFRESH_COOKIE_SAMESITE
         value: lax
-      - key: WHISPER_MODEL
-        value: small
       - key: GEMINI_MODEL
         value: gemini-2.5-flash

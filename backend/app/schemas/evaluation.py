@@ -7,7 +7,9 @@ FeedbackLanguage = Literal["en", "bn"]
 
 
 class GeminiEvaluation(BaseModel):
-    recognized_translation: str
+    recognized_translation: str = Field(
+        description="Actual audible words, never an expected answer; empty if no words are intelligible."
+    )
     is_valid_response: bool = Field(
         description=(
             "Whether a genuine, assessable spoken translation attempt in the "
@@ -23,7 +25,10 @@ class GeminiEvaluation(BaseModel):
 
     @model_validator(mode="after")
     def zero_scores_for_invalid_response(self) -> Self:
-        """An invalid speaking attempt cannot carry contradictory positive scores."""
+        """Empty or invalid speech cannot carry contradictory positive scores."""
+        self.recognized_translation = self.recognized_translation.strip()
+        if not self.recognized_translation:
+            self.is_valid_response = False
         if not self.is_valid_response:
             self.accuracy_score = 0
             self.grammar_score = 0
