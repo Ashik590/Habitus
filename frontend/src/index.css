@@ -49,16 +49,32 @@ h1 { color: var(--ink); font-size: clamp(2.4rem, 5vw, 4.4rem); line-height: 1.08
 h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); }
 .app-shell { display: flex; flex-direction: column; min-height: 100vh; }
 .app-shell > main { flex: 1; }
-.site-header { height: 76px; padding: 0 max(24px, calc((100vw - 1380px) / 2)); display: flex; align-items: center; justify-content: space-between; background: color-mix(in srgb, var(--page) 94%, transparent); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 10; backdrop-filter: blur(14px); }
+.site-header {
+  height: 76px;
+  padding: 0 max(24px, calc((100vw - 1380px) / 2));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #f7efea;
+  background-image: url("./assets/botanical-pattern.svg");
+  background-size: 420px 120px;
+  background-position: center;
+  background-repeat: repeat;
+  border-bottom: 1px solid var(--rose-border);
+  box-shadow: 0 4px 20px rgba(83, 47, 60, .06), inset 0 1px 0 rgba(255, 255, 255, .65);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
 .brand { display: inline-flex; align-items: center; gap: 10px; color: var(--rose); font-family: var(--font-serif); font-size: 1.4rem; font-weight: 650; text-decoration: none; letter-spacing: -.02em; padding: 6px 12px; margin-left: -12px; border-radius: 10px; transition: background .15s ease; }
 .brand:hover { background: var(--rose-soft); }
-.brand-logo { color: var(--rose); flex-shrink: 0; }
+.brand-logo { display: block; width: 32px; height: 32px; flex-shrink: 0; }
 .site-nav { display: flex; align-items: center; gap: 8px; }
 .nav-item { display: inline-flex; align-items: center; justify-content: center; padding: 9px 16px; border-radius: 9px; color: var(--muted); text-decoration: none; font-weight: 600; font-size: 0.92rem; background: transparent; border: 1px solid transparent; cursor: pointer; transition: all .15s ease; line-height: 1.2; font-family: var(--font-sans); }
-.nav-item:hover { color: var(--rose); background: var(--rose-soft); }
 .nav-item.active { color: var(--rose); background: var(--rose-soft); border-color: var(--rose-border); font-weight: 700; box-shadow: var(--shadow-sm); }
+.nav-item:hover, .nav-item:focus-visible { color: var(--rose-deep); background: var(--rose-hover); border-color: var(--rose-border); box-shadow: var(--shadow-sm); }
 .nav-divider { width: 1px; height: 22px; background: var(--line); margin: 0 4px; }
-.nav-logout-btn:hover { color: var(--danger); background: var(--danger-soft); border-color: var(--danger-border); }
+.nav-logout-btn:hover, .nav-logout-btn:focus-visible { color: var(--danger); background: var(--danger-soft); border-color: var(--danger-border); }
 .nav-cta-btn { padding: 9px 18px; border-radius: 9px; font-size: 0.9rem; margin-left: 2px; }
 .page-container { width: min(1380px, calc(100% - 48px)); margin: 0 auto; padding: 56px 0 96px; }
 .button { display: inline-flex; justify-content: center; align-items: center; border: 0; border-radius: 9px; padding: 12px 20px; background: var(--rose); color: var(--on-rose) !important; text-decoration: none; font-weight: 650; font-size: 0.95rem; cursor: pointer; transition: background .15s ease, box-shadow .15s ease; }
@@ -197,6 +213,7 @@ h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); }
 .site-footer-inner { position: relative; width: min(1240px, calc(100% - 96px)); margin: 0 auto; padding: 72px 0 28px; }
 .footer-top { display: grid; grid-template-columns: minmax(280px, 1.55fr) minmax(150px, .65fr) minmax(260px, 1fr); gap: clamp(40px, 7vw, 96px); align-items: start; }
 .site-footer .brand { font-size: 1.8rem; }
+.site-footer .brand-logo { width: 40px; height: 40px; }
 .footer-brand-block .brand { margin-bottom: 18px; }
 .footer-statement { max-width: 430px; margin: 0; color: var(--ink-secondary); font-family: var(--font-serif); font-size: clamp(1.15rem, 1.6vw, 1.45rem); line-height: 1.4; letter-spacing: -.01em; }
 .footer-practice-link { display: inline-flex; align-items: center; gap: 10px; margin-top: 24px; color: var(--rose); font-size: .9rem; font-weight: 750; text-decoration: none; }
@@ -497,6 +514,35 @@ h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); }
 .contact-label { color: var(--muted); }
 .contact-link { color: var(--rose); font-weight: 650; text-decoration: none; font-family: var(--font-mono); font-size: 0.9rem; transition: color .15s ease; }
 .contact-link:hover { color: var(--rose-deep); text-decoration: underline; }
+
+/* Shared botanical surfaces; layered backgrounds leave controls unobstructed. */
+:is(
+  .practice-setup-panel,
+  .practice-card,
+  .exercise-list,
+  .motto-showcase,
+  .about-cta-card,
+  .dashboard-header
+) {
+  background-image:
+    linear-gradient(110deg,
+      rgba(255, 253, 251, .25),
+      rgba(255, 253, 251, var(--botanical-veil, .62)) 48%,
+      rgba(255, 253, 251, .35)),
+    url("./assets/botanical-pattern.svg");
+  background-size: 100% 100%, 560px 160px;
+  background-position: center, right top;
+  background-repeat: no-repeat, repeat;
+}
+
+.dashboard-header, .motto-showcase {
+  --botanical-veil: .32;
+  background-color: var(--rose-soft);
+}
+
+.practice-card, .exercise-list {
+  --botanical-veil: .85;
+}
 
 @media (max-width: 1200px) {
   .dashboard-grid { grid-template-columns: 1fr; }
