@@ -17,8 +17,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
-# Download model files during the build instead of the first user request.
-RUN python -c "from faster_whisper.utils import download_model; download_model('tiny')"
+# Render passes WHISPER_MODEL from the service environment as a build argument.
+# Keep the baked-in model and the runtime default in sync; local builds use Tiny.
+ARG WHISPER_MODEL=tiny
+ENV WHISPER_MODEL=${WHISPER_MODEL}
+RUN python -c "import os; from faster_whisper.utils import download_model; download_model(os.environ['WHISPER_MODEL'])"
 COPY backend/ ./
 COPY --from=frontend /build/dist /app/frontend-dist
 RUN useradd --create-home appuser && chown -R appuser:appuser /app
