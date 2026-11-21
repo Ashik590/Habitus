@@ -1,0 +1,224 @@
+/* Load after index.css to refine the existing tablet and phone layouts. */
+.modal-card {
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+}
+
+@media (max-width: 1200px) {
+  .dashboard-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1100px) {
+  .footer-top {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 36px;
+  }
+
+  .footer-brand-block {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 960px) {
+  .site-header {
+    height: auto;
+    min-height: 76px;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    padding-block: 12px;
+  }
+
+  .site-nav {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .home-languages {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  .home-languages h2 {
+    max-width: none;
+  }
+
+  .footer-column,
+  .home-language-action,
+  .personal-hero > div:last-child,
+  .developer-details {
+    min-width: 0;
+  }
+
+  .footer-developer a,
+  .contact-link,
+  .profile-name {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 720px) {
+  .site-header {
+    height: auto;
+    min-height: 0;
+    padding-block: 10px;
+  }
+
+  .site-nav {
+    width: 100%;
+  }
+
+  .site-nav .nav-item,
+  .site-nav .nav-cta-btn {
+    min-height: 44px;
+  }
+
+  .footer-top {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .practice-card-top {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .practice-meta {
+    flex-wrap: wrap;
+    gap: 8px 12px;
+  }
+
+  .countdown-banner {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .timer-info {
+    flex: 1 1 180px;
+    min-width: 0;
+  }
+
+  .countdown-clock {
+    flex-shrink: 0;
+  }
+
+  .recorder-toolbar,
+  .recorder-toolbar label {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .exercise-row {
+    grid-template-columns: 42px minmax(0, 1fr) 18px;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .exercise-title,
+  .recognized-answer strong,
+  .feedback-box li,
+  .translations li {
+    overflow-wrap: anywhere;
+  }
+
+  .chart-heading {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .summary-card,
+  .chart-card {
+    min-width: 0;
+  }
+
+  .summary-card > span {
+    overflow-wrap: anywhere;
+  }
+
+  .profile-photo-control,
+  .profile-photo-actions {
+    flex-wrap: wrap;
+  }
+
+  .modal-actions {
+    flex-wrap: wrap;
+  }
+
+  .form-card :is(input, select),
+  .info-item select,
+  .dashboard-language-control select,
+  .recorder-toolbar select {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 540px) {
+  .modal-card {
+    padding: 24px 20px;
+  }
+
+  .modal-header {
+    flex-wrap: wrap;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .modal-actions .button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .recorder-toolbar label {
+    width: 100%;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .recorder-toolbar select {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .record-button {
+    padding: 14px;
+  }
+
+  .record-button span {
+    flex-shrink: 0;
+  }
+
+  .language-direction {
+    gap: 6px;
+  }
+
+  .language-direction > div {
+    min-width: 0;
+    padding: 14px 10px;
+  }
+
+  .language-direction strong {
+    overflow-wrap: anywhere;
+  }
+
+  .language-direction-arrow {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+@media (max-width: 380px) {
+  .dashboard-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .preview-card-header,
+  .preview-score-header,
+  .analytics-heading {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}

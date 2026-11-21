@@ -45,6 +45,7 @@ export function AudioRecorder({
   const streamRef = useRef<MediaStream | null>(null)
   const intervalRef = useRef<number | null>(null)
   const startedAtRef = useRef<number>(Date.now())
+  const mountedRef = useRef(false)
 
   function updateStatus(newStatus: RecorderStatus) {
     statusRef.current = newStatus
@@ -91,6 +92,7 @@ export function AudioRecorder({
   }
 
   useEffect(() => {
+    mountedRef.current = true
     clearTimer()
     startedAtRef.current = Date.now()
     intervalRef.current = window.setInterval(() => {
@@ -109,8 +111,14 @@ export function AudioRecorder({
       }
     }, 200)
     return () => {
+      mountedRef.current = false
       clearTimer()
-      if (recorderRef.current?.state === 'recording') recorderRef.current.stop()
+      if (recorderRef.current) {
+        // Navigation/unmount cancels the session instead of submitting it.
+        recorderRef.current.onstop = null
+        recorderRef.current.ondataavailable = null
+        if (recorderRef.current.state !== 'inactive') recorderRef.current.stop()
+      }
       releaseMicrophone()
     }
     // The recorder is remounted for each exercise. Re-running this effect for
@@ -129,10 +137,12 @@ export function AudioRecorder({
         feedbackLanguage,
         accessToken,
       )
+      if (!mountedRef.current) return
       setShowSolutions(false)
       setResult(evaluation)
       updateStatus('complete')
     } catch (requestError) {
+      if (!mountedRef.current) return
       setError(
         requestError instanceof Error
           ? requestError.message
@@ -162,6 +172,10 @@ export function AudioRecorder({
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      if (!mountedRef.current || statusRef.current !== 'requesting') {
+        stream.getTracks().forEach((track) => track.stop())
+        return
+      }
       streamRef.current = stream
       const mimeType = chooseMimeType()
       const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined)
@@ -183,7 +197,7 @@ export function AudioRecorder({
           return
         }
 
-        void evaluateRecording(audio)
+        if (mountedRef.current) void evaluateRecording(audio)
       }
 
       recorder.start(250)
