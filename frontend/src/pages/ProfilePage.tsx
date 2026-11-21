@@ -201,13 +201,13 @@ export function ProfilePage() {
                       <span className="chart-caption">A1–C2</span>
                     </div>
                     <div className="bar-chart">
-                      {statistics.level_scores.map((level, index) => (
+                      {statistics.level_scores.map((level) => (
                         <ScoreBar
                           key={level.level}
                           label={level.level}
                           score={level.current_score}
                           detail={`${level.exercises_completed} of ${level.exercises_available} completed`}
-                          tone={index >= 4 ? 'purple' : index >= 2 ? 'gold' : 'rose'}
+                          level={level.level}
                         />
                       ))}
                     </div>

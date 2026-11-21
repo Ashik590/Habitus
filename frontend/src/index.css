@@ -296,10 +296,14 @@ h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); }
 .load-more-btn { min-width: 260px; padding: 12px 24px; font-weight: 650; }
 .exercise-title { display: flex; flex-direction: column; font-weight: 650; }
 .exercise-title small, .exercise-progress { color: var(--muted); font-weight: 450; font-family: var(--font-sans); }
-.level-badge { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 28px; border-radius: 6px; font-size: .78rem; font-weight: 750; font-family: var(--font-mono); background: var(--rose-soft); color: var(--rose); }
-.level-b1, .level-b2 { background: var(--gold-soft); color: var(--gold); }
-.level-c1 { background: var(--purple-soft); color: var(--purple); }
-.level-c2 { background: #ecdee8; color: var(--rose-deep); font-weight: 800; }
+/* Shared CEFR palette for exercise badges and dashboard progress bars. */
+.level-a1 { --level-color: #23744d; --level-soft: #e3f1e7; }
+.level-a2 { --level-color: #3265a5; --level-soft: #e5edfa; }
+.level-b1 { --level-color: #966c12; --level-soft: #f8edca; }
+.level-b2 { --level-color: #8050ad; --level-soft: #eee3f7; }
+.level-c1 { --level-color: #b44d27; --level-soft: #fbe6d8; }
+.level-c2 { --level-color: var(--rose); --level-soft: var(--rose-hover); }
+.level-badge { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 28px; flex-shrink: 0; border-radius: 7px; font-size: .78rem; font-weight: 750; font-family: var(--font-mono); background: var(--level-soft, var(--rose-soft)); color: var(--level-color, var(--rose)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--level-color, var(--rose)) 24%, transparent); }
 .status-message { padding: 20px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--muted); }
 .status-message.error, .form-error { color: var(--danger); background: var(--danger-soft); border-color: var(--danger-border); }
 .practice-card { max-width: 900px; margin: 0 auto; padding: 38px 42px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); }
@@ -445,6 +449,8 @@ h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); }
 .score-bar-fill.rose { background: var(--rose); }
 .score-bar-fill.gold { background: var(--gold); }
 .score-bar-fill.purple { background: var(--purple); }
+.score-bar-level .score-bar-track { height: 9px; background: var(--level-soft); }
+.score-bar-level .score-bar-fill { background: var(--level-color); }
 .profile-sidebar { position: sticky; top: 96px; }
 .personal-info-card { overflow: hidden; padding: 0 26px 26px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: var(--shadow); }
 .personal-hero { display: flex; align-items: center; gap: 15px; margin: 0 -26px 4px; padding: 26px; border-bottom: 1px solid var(--line); background: linear-gradient(145deg, var(--rose-soft), var(--surface-subtle)); }
