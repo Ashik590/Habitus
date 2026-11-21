@@ -4,7 +4,17 @@ Habitus is a learning project by Md Azizul Hakim, originating in Dhaka,
 Bangladesh. Practise spoken translations with timed exercises, speech
 transcription, AI feedback, and a personal learning dashboard.
 
-Stack: React, TypeScript, Vite, FastAPI, PostgreSQL, Faster Whisper, and Gemini.
+Stack: React, TypeScript, Vite, FastAPI, PostgreSQL, and Gemini.
+
+The browser records audio without producing a transcript. The backend sends
+the recording, source sentence, language direction, CEFR level, and scoring
+instructions to Gemini. A temporary server failure or network timeout permits
+one automatic retry (at most two attempts using the same API key). Invalid
+requests, authentication errors, and rate-limit responses are not retried.
+Preferred solutions from the database
+are not included. Gemini transcribes the audible response and evaluates it;
+recommended translations are generated independently from the source sentence.
+Neither Whisper nor browser speech recognition is used.
 
 ## Development
 
@@ -45,7 +55,8 @@ it through FastAPI on the same origin. `render.yaml` selects a free Render
 service. PostgreSQL and profile pictures use a separately configured Supabase
 project. Existing account authentication remains managed by Habitus.
 
-See [CHANGELOG.md](CHANGELOG.md) for the first release candidate and limitations.
+See [GitHub Releases](https://github.com/Ashik590/Habitus/releases) for version
+history, release notes, and known limitations.
 
 ## Checks
 
@@ -58,6 +69,7 @@ npm run lint
 ```bash
 cd backend
 .venv/bin/python -m compileall -q app
+.venv/bin/python -m unittest discover -s tests -v
 ```
 
 Deployment checks: register, log in, refresh the page, upload and remove a

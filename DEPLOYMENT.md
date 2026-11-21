@@ -116,8 +116,12 @@ The built frontend calls the API on the same origin, so it does not depend on
 CORS for its initial load. The blueprint generates the JWT secret and enables
 secure refresh cookies automatically.
 
-Docker builds the frontend, installs backend dependencies, and downloads Tiny
-Whisper. Startup applies migrations, then starts one Uvicorn worker. No separate
+Docker builds the frontend and installs backend dependencies. Gemini transcribes
+and evaluates the recording directly, without browser transcripts or preferred
+solutions from the database.
+No Whisper model is downloaded or loaded on the server. Remove obsolete
+`WHISPER_MODEL` and `HF_HUB_OFFLINE` variables from Render if present.
+Startup applies migrations, then starts one Uvicorn worker. No separate
 frontend service, build command, start command, or paid pre-deploy job is needed.
 
 ## 6. Verify the live service
@@ -137,13 +141,12 @@ before declaring the deployment successful. Do not enable a paid plan silently.
 
 ## 7. Publish the first GitHub Release
 
-Only after the live checks pass, update the changelog heading from release
-candidate to the actual release date, review and commit that change manually.
+Only after the live checks pass, publish release notes for the verified commit.
 On GitHub, open **Releases → Draft a new release**:
 
 - Create tag `v0.1.0` against the verified deployment commit.
 - Title: `Habitus v0.1.0`.
-- Copy the features and known limitations from `CHANGELOG.md`.
+- Describe the features, changes, and known limitations in the release notes.
 - Add your live site URL and publish the release.
 
 Reference documentation:

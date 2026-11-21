@@ -45,7 +45,7 @@ export function AboutPage() {
             <div className="about-card-icon">🎙️</div>
             <h3>Multimodal Acoustic AI</h3>
             <p>
-              Habitus combines local speech recognition and voice-activity detection with Google Gemini evaluation across four quantitative dimensions: Accuracy, Grammar, Naturalness, and Fluency.
+              Google Gemini transcribes your recording and evaluates the speech you actually produce across four quantitative dimensions: Accuracy, Grammar, Naturalness, and Fluency. Evaluation uses the source sentence without supplying preferred translations.
             </p>
           </article>
 
