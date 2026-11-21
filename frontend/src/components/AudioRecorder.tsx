@@ -264,8 +264,12 @@ export function AudioRecorder({
       )}
 
       {status === 'evaluating' && (
-        <div className="status-message">
-          <p>Evaluating your spoken answer…</p>
+        <div className="status-message evaluation-wait" role="status" aria-atomic="true">
+          <p className="evaluation-wait-title">Evaluating your spoken answer…</p>
+          <p className="evaluation-wait-note">
+            Please allow at least 10 seconds for evaluation. It may take longer during
+            busy periods. Keep this page open until your results appear.
+          </p>
         </div>
       )}
 

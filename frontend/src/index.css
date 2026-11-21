@@ -347,6 +347,9 @@ h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); }
 .record-button.recording span { border-radius: 3px; box-shadow: 0 0 0 5px rgba(255, 248, 245, .2); animation: recording-pulse 1.2s ease-in-out infinite; }
 .recorder-help { margin: 10px 0 0; color: var(--muted); font-size: .85rem; text-align: center; }
 .recorder-panel .form-error { margin-top: 16px; }
+.evaluation-wait { display: grid; gap: 8px; border-color: var(--rose-border); background: var(--rose-soft); }
+.evaluation-wait-title { margin: 0; color: var(--rose-deep); font-weight: 700; }
+.evaluation-wait-note { max-width: 62ch; margin: 0; color: var(--ink-secondary); font-size: .95rem; font-weight: 750; line-height: 1.65; }
 .evaluation-result { margin-top: 34px; }
 .overall-score { display: grid; place-items: center; padding: 26px; border-radius: 16px; background: var(--rose-soft); }
 .overall-score span, .overall-score small { color: var(--muted); }
