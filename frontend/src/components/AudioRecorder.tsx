@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { ApiError, api } from '../lib/api'
+import { api } from '../lib/api'
 import type { EvaluationResponse } from '../types/api'
 
-type RecorderStatus = 'active' | 'requesting' | 'recording' | 'evaluating' | 'complete' | 'expired'
+type RecorderStatus = 'active' | 'requesting' | 'recording' | 'evaluating' | 'complete' | 'expired' | 'failed'
 
 interface AudioRecorderProps {
   sourceCode: string
@@ -49,7 +49,7 @@ export function AudioRecorder({
   function updateStatus(newStatus: RecorderStatus) {
     statusRef.current = newStatus
     setStatus(newStatus)
-    if (newStatus === 'evaluating' || newStatus === 'complete' || newStatus === 'expired') {
+    if (newStatus === 'evaluating' || newStatus === 'complete' || newStatus === 'expired' || newStatus === 'failed') {
       onPhaseChange?.(true)
     } else {
       onPhaseChange?.(false)
@@ -133,15 +133,12 @@ export function AudioRecorder({
       setResult(evaluation)
       updateStatus('complete')
     } catch (requestError) {
-      const retryMessage = requestError instanceof ApiError && requestError.retryAfterSeconds
-        ? ` Try again in approximately ${requestError.retryAfterSeconds} seconds.`
-        : ''
       setError(
         requestError instanceof Error
-          ? `${requestError.message}${retryMessage}`
-          : 'Evaluation failed.',
+          ? requestError.message
+          : 'Please retry again.',
       )
-      updateStatus('expired')
+      updateStatus('failed')
     }
   }
 
@@ -212,7 +209,7 @@ export function AudioRecorder({
     startSessionTimer()
   }
 
-  const isFinished = status === 'evaluating' || status === 'complete' || status === 'expired'
+  const isFinished = status === 'evaluating' || status === 'complete' || status === 'expired' || status === 'failed'
 
   return (
     <div className="recorder-panel">
@@ -273,10 +270,10 @@ export function AudioRecorder({
         </div>
       )}
 
-      {status === 'expired' && !result && (
+      {(status === 'expired' || status === 'failed') && !result && (
         <div className="expired-card">
-          <div className="expired-icon" aria-hidden="true">⏱️</div>
-          <h2>Time Expired</h2>
+          <div className="expired-icon" aria-hidden="true">{status === 'failed' ? '↻' : '⏱️'}</div>
+          <h2>{status === 'failed' ? 'Evaluation unsuccessful' : 'Time Expired'}</h2>
           <p>{error || 'The countdown reached zero before an answer was recorded.'}</p>
           <div className="button-row">
             <button className="button" type="button" onClick={handleReset}>

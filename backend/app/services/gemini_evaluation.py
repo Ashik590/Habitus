@@ -1,14 +1,7 @@
 import asyncio
-from dataclasses import dataclass
-from enum import Enum
 from functools import lru_cache
 import io
 import logging
-import math
-import random
-import re
-import threading
-import time
 import wave
 
 from faster_whisper import WhisperModel
@@ -72,11 +65,9 @@ class EvaluationServiceError(Exception):
         message: str,
         *,
         status_code: int = 503,
-        retry_after_seconds: int | None = None,
     ) -> None:
         super().__init__(message)
         self.status_code = status_code
-        self.retry_after_seconds = retry_after_seconds
 
 
 def _extract_json_response(response_text: str) -> str:
@@ -153,270 +144,36 @@ def _normalize_audio(
     return destination.getvalue(), "audio/wav", "wav"
 
 
-class KeyState(str, Enum):
-    AVAILABLE = "AVAILABLE"
-    COOLDOWN = "COOLDOWN"
-    HALF_OPEN = "HALF_OPEN"
-    DISABLED = "DISABLED"
-
-
-@dataclass
-class KeyRecord:
-    state: KeyState = KeyState.AVAILABLE
-    consecutive_failures: int = 0
-    cooldown_until: float | None = None
-    last_failure_at: float | None = None
-
-
-class GeminiKeyPool:
-    """Thread-safe circuit breaker for Gemini API keys."""
-
-    COOLDOWN_SECONDS = (60, 300, 900, 3600, 21600, 43200)
-
-    def __init__(self) -> None:
-        self._records: dict[str, KeyRecord] = {}
-        self._next_key_index = 0
-        self._lock = threading.Lock()
-
-    def acquire_key(self, all_keys: list[str], excluded: set[str]) -> str | None:
-        """Select one key, lazily opening a single expired cooldown for probing."""
-        now = time.time()
-        with self._lock:
-            if not all_keys:
-                return None
-
-            start = self._next_key_index % len(all_keys)
-            ordered_keys = all_keys[start:] + all_keys[:start]
-            for key in ordered_keys:
-                if key in excluded:
-                    continue
-
-                record = self._records.setdefault(key, KeyRecord())
-                if record.state == KeyState.AVAILABLE:
-                    self._next_key_index = (all_keys.index(key) + 1) % len(all_keys)
-                    return key
-
-                if (
-                    record.state == KeyState.COOLDOWN
-                    and record.cooldown_until is not None
-                    and now >= record.cooldown_until
-                ):
-                    # The lock makes this an exclusive recovery probe. Other
-                    # requests see HALF_OPEN and bypass the same key.
-                    record.state = KeyState.HALF_OPEN
-                    self._next_key_index = (all_keys.index(key) + 1) % len(all_keys)
-                    return key
-
-            return None
-
-    def mark_success(self, key: str) -> None:
-        with self._lock:
-            self._records[key] = KeyRecord()
-
-    def mark_rate_limited(self, key: str, provider_retry_after: float | None) -> None:
-        now = time.time()
-        with self._lock:
-            record = self._records.setdefault(key, KeyRecord())
-            record.consecutive_failures += 1
-            schedule_index = min(
-                record.consecutive_failures - 1,
-                len(self.COOLDOWN_SECONDS) - 1,
-            )
-            cooldown_seconds = float(self.COOLDOWN_SECONDS[schedule_index])
-            if provider_retry_after is not None:
-                cooldown_seconds = max(cooldown_seconds, provider_retry_after)
-
-            record.state = KeyState.COOLDOWN
-            record.last_failure_at = now
-            record.cooldown_until = now + cooldown_seconds
-            masked = f"...{key[-4:]}" if len(key) >= 4 else "..."
-            logger.warning(
-                "Gemini key %s entered cooldown for %.0fs after consecutive 429 #%d.",
-                masked,
-                cooldown_seconds,
-                record.consecutive_failures,
-            )
-
-    def release_probe(self, key: str) -> None:
-        """Return a half-open key after a failure unrelated to its quota."""
-        with self._lock:
-            record = self._records.setdefault(key, KeyRecord())
-            if record.state == KeyState.HALF_OPEN:
-                record.state = KeyState.AVAILABLE
-                record.cooldown_until = None
-
-    def disable(self, key: str) -> None:
-        with self._lock:
-            record = self._records.setdefault(key, KeyRecord())
-            record.state = KeyState.DISABLED
-            record.cooldown_until = None
-            record.last_failure_at = time.time()
-
-    def retry_after_seconds(self, all_keys: list[str]) -> int | None:
-        now = time.time()
-        with self._lock:
-            future_cooldowns = [
-                record.cooldown_until
-                for key in all_keys
-                if (record := self._records.get(key)) is not None
-                and record.state == KeyState.COOLDOWN
-                and record.cooldown_until is not None
-                and record.cooldown_until > now
-            ]
-        if not future_cooldowns:
-            return None
-        return max(1, math.ceil(min(future_cooldowns) - now))
-
-
-_key_pool = GeminiKeyPool()
-
-TRANSIENT_STATUS_CODES = {500, 502, 503, 504}
-REQUEST_ERROR_STATUS_CODES = {400, 404, 422}
-MAX_TRANSIENT_RETRIES = 2
-
-
-def _find_retry_delay(value: object) -> float | None:
-    """Best-effort extraction; circuit-breaker correctness does not depend on it."""
-    if isinstance(value, dict):
-        for key, child in value.items():
-            if key.lower() in {"retrydelay", "retry_delay"}:
-                match = re.search(r"([0-9]+(?:\.[0-9]+)?)", str(child))
-                if match:
-                    return float(match.group(1))
-            found = _find_retry_delay(child)
-            if found is not None:
-                return found
-    elif isinstance(value, list):
-        for child in value:
-            found = _find_retry_delay(child)
-            if found is not None:
-                return found
-    return None
-
-
-def _send_gemini_request(
-    client: genai.Client,
-    contents: list[object] | object,
-    temperature: float,
-):
-    return client.models.generate_content(
-        model=settings.gemini_model,
-        contents=contents,
-        config=types.GenerateContentConfig(
-            temperature=temperature,
-            response_mime_type="application/json",
-            response_schema=GeminiEvaluation,
-            http_options=types.HttpOptions(
-                timeout=30_000,
-                retry_options=types.HttpRetryOptions(attempts=1),
-            ),
-        ),
-    )
-
-
-def _generate_with_key_pool(
+def _generate_evaluation(
     contents: list[object] | object,
     temperature: float = 0.0,
 ):
-    all_keys = settings.all_gemini_api_keys
-    if not all_keys:
-        raise EvaluationServiceError("No Gemini API key is configured.")
+    """Make one provider request using one key, with SDK retries disabled."""
+    if not settings.gemini_api_key or not settings.gemini_api_key.strip():
+        logger.error("GEMINI_API_KEY is not configured")
+        raise EvaluationServiceError("Please retry again.")
 
-    attempted_keys: set[str] = set()
-    while api_key := _key_pool.acquire_key(all_keys, attempted_keys):
-        attempted_keys.add(api_key)
-        masked_key = f"...{api_key[-4:]}" if len(api_key) >= 4 else "..."
-        client = genai.Client(api_key=api_key)
-
-        for transient_attempt in range(MAX_TRANSIENT_RETRIES + 1):
-            try:
-                response = _send_gemini_request(client, contents, temperature)
-                _key_pool.mark_success(api_key)
-                logger.info(
-                    "Gemini evaluation succeeded using API key %s with model %s",
-                    masked_key,
-                    settings.gemini_model,
-                )
-                return response
-
-            except errors.ClientError as exc:
-                if exc.code == 429:
-                    _key_pool.mark_rate_limited(
-                        api_key,
-                        provider_retry_after=_find_retry_delay(exc.details),
-                    )
-                    break
-
-                _key_pool.release_probe(api_key)
-                if exc.code in {401, 403}:
-                    _key_pool.disable(api_key)
-                    logger.error(
-                        "Gemini key %s was disabled after provider error %s.",
-                        masked_key,
-                        exc.code,
-                    )
-                    break
-
-                if exc.code in REQUEST_ERROR_STATUS_CODES:
-                    logger.exception("Gemini rejected the evaluation request")
-                    raise EvaluationServiceError(
-                        "The evaluation provider rejected the request.",
-                        status_code=502,
-                    ) from exc
-
-                logger.exception("Gemini returned an unexpected client error")
-                raise EvaluationServiceError(
-                    "The evaluation provider could not process the request.",
-                    status_code=502,
-                ) from exc
-
-            except errors.ServerError as exc:
-                if exc.code not in TRANSIENT_STATUS_CODES:
-                    _key_pool.release_probe(api_key)
-                    logger.exception("Gemini returned an unexpected server error")
-                    raise EvaluationServiceError(
-                        "The evaluation provider returned an unexpected error."
-                    ) from exc
-
-                if transient_attempt < MAX_TRANSIENT_RETRIES:
-                    delay = (2**transient_attempt) + random.uniform(0, 0.5)
-                    logger.warning(
-                        "Gemini transient error %s for key %s; retrying in %.2fs.",
-                        exc.code,
-                        masked_key,
-                        delay,
-                    )
-                    time.sleep(delay)
-                    continue
-
-                _key_pool.release_probe(api_key)
-                raise EvaluationServiceError(
-                    "The evaluation service is temporarily unavailable. Please try again.",
-                    retry_after_seconds=5,
-                ) from exc
-
-            except (httpx.TimeoutException, httpx.TransportError) as exc:
-                if transient_attempt < MAX_TRANSIENT_RETRIES:
-                    delay = (2**transient_attempt) + random.uniform(0, 0.5)
-                    logger.warning(
-                        "Gemini transport failure for key %s; retrying in %.2fs.",
-                        masked_key,
-                        delay,
-                    )
-                    time.sleep(delay)
-                    continue
-
-                _key_pool.release_probe(api_key)
-                raise EvaluationServiceError(
-                    "The evaluation service timed out. Please try again.",
-                    retry_after_seconds=5,
-                ) from exc
-
-    retry_after = _key_pool.retry_after_seconds(all_keys)
-    raise EvaluationServiceError(
-        "Evaluation capacity is temporarily unavailable. Please try again later.",
-        retry_after_seconds=retry_after,
-    )
+    try:
+        with genai.Client(
+            api_key=settings.gemini_api_key.strip(),
+            http_options=types.HttpOptions(
+                timeout=30_000,
+                # The SDK counts the initial request as the first attempt.
+                retry_options=types.HttpRetryOptions(attempts=1),
+            ),
+        ) as client:
+            return client.models.generate_content(
+                model=settings.gemini_model,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    temperature=temperature,
+                    response_mime_type="application/json",
+                    response_schema=GeminiEvaluation,
+                ),
+            )
+    except (errors.APIError, httpx.HTTPError) as exc:
+        logger.exception("Gemini evaluation failed; no automatic retry was attempted")
+        raise EvaluationServiceError("Please retry again.") from exc
 
 
 def _clean_transcription(text: str) -> str:
@@ -525,8 +282,9 @@ def _evaluate_audio_sync(
     mime_type: str,
     feedback_language: FeedbackLanguage,
 ) -> GeminiEvaluation:
-    if not settings.all_gemini_api_keys:
-        raise EvaluationServiceError("No Gemini API key is configured.")
+    if not settings.gemini_api_key or not settings.gemini_api_key.strip():
+        logger.error("GEMINI_API_KEY is not configured")
+        raise EvaluationServiceError("Please retry again.")
 
     normalized_bytes, normalized_mime_type, _ = _normalize_audio(
         audio_bytes,
@@ -575,7 +333,7 @@ def _evaluate_audio_sync(
         cleaned_transcript,
         feedback_language,
     )
-    evaluation_response = _generate_with_key_pool(
+    evaluation_response = _generate_evaluation(
         contents=[audio_part, evaluation_prompt],
         temperature=0.0,
     )
@@ -588,7 +346,7 @@ def _evaluate_audio_sync(
     except (ValidationError, TypeError, ValueError) as exc:
         logger.exception("Gemini returned an invalid evaluation response")
         raise EvaluationServiceError(
-            "Gemini returned an invalid evaluation response."
+            "Please retry again."
         ) from exc
 
 
@@ -610,4 +368,4 @@ async def evaluate_audio(
         raise
     except Exception as exc:
         logger.exception("Gemini evaluation request failed")
-        raise EvaluationServiceError("Gemini evaluation request failed.") from exc
+        raise EvaluationServiceError("Please retry again.") from exc
