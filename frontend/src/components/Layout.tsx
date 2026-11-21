@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { NavLink, Outlet, useLocation, useNavigationType } from 'react-router-dom'
+import footerLandscape from '../assets/misty-lake-dawn.png'
 import { useAuth } from '../auth/useAuth'
 
 function HabitusLogo() {
@@ -63,6 +64,17 @@ export function Layout() {
       </header>
       <main className={pathname === '/' ? 'home-main' : 'page-container'}><Outlet /></main>
       <footer className="site-footer">
+        <img
+          className="footer-landscape"
+          src={footerLandscape}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          decoding="async"
+          fetchPriority="low"
+          width="2172"
+          height="724"
+        />
         <div className="site-footer-inner">
           <div className="footer-top">
             <div className="footer-brand-block">
