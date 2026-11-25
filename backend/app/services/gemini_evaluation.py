@@ -137,7 +137,17 @@ def _generate_evaluation(
             )
     except (errors.APIError, httpx.HTTPError) as exc:
         logger.exception("Gemini evaluation failed after permitted request attempts")
-        raise EvaluationServiceError("Please retry again.") from exc
+        if isinstance(exc, errors.APIError) and exc.code == 503:
+            message = "Speech evaluation is temporarily busy. Please try again shortly."
+        elif isinstance(exc, errors.APIError) and exc.code == 429:
+            message = "Speech evaluation has reached its usage limit. Please try again later."
+        elif isinstance(exc, httpx.TimeoutException) or (
+            isinstance(exc, errors.APIError) and exc.code in (408, 504)
+        ):
+            message = "Speech evaluation took too long to respond. Please try again shortly."
+        else:
+            message = "Speech evaluation is temporarily unavailable. Please try again later."
+        raise EvaluationServiceError(message) from exc
 
 
 def build_evaluation_prompt(

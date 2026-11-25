@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { api } from '../lib/api'
+import { api, ApiError } from '../lib/api'
 import type { EvaluationResponse } from '../types/api'
 
 type RecorderStatus = 'active' | 'requesting' | 'recording' | 'evaluating' | 'complete' | 'expired' | 'failed'
@@ -39,6 +39,7 @@ export function AudioRecorder({
   const [result, setResult] = useState<EvaluationResponse | null>(null)
   const [showSolutions, setShowSolutions] = useState(false)
   const [error, setError] = useState('')
+  const [canRetryEvaluation, setCanRetryEvaluation] = useState(false)
 
   const statusRef = useRef<RecorderStatus>('active')
   const recorderRef = useRef<MediaRecorder | null>(null)
@@ -46,6 +47,7 @@ export function AudioRecorder({
   const intervalRef = useRef<number | null>(null)
   const startedAtRef = useRef<number>(Date.now())
   const mountedRef = useRef(false)
+  const pendingRecordingRef = useRef<Blob | null>(null)
 
   function updateStatus(newStatus: RecorderStatus) {
     statusRef.current = newStatus
@@ -120,6 +122,7 @@ export function AudioRecorder({
         if (recorderRef.current.state !== 'inactive') recorderRef.current.stop()
       }
       releaseMicrophone()
+      pendingRecordingRef.current = null
     }
     // The recorder is remounted for each exercise. Re-running this effect for
     // callback identity changes would restart an active countdown.
@@ -127,6 +130,11 @@ export function AudioRecorder({
   }, [exerciseId, timeLimitSeconds])
 
   async function evaluateRecording(audio: Blob) {
+    if (!mountedRef.current || statusRef.current === 'evaluating') return
+    clearTimer()
+    pendingRecordingRef.current = audio
+    setCanRetryEvaluation(false)
+    setError('')
     updateStatus('evaluating')
     try {
       const evaluation = await api.evaluateExercise(
@@ -138,15 +146,20 @@ export function AudioRecorder({
         accessToken,
       )
       if (!mountedRef.current) return
+      pendingRecordingRef.current = null
       setShowSolutions(false)
       setResult(evaluation)
       updateStatus('complete')
     } catch (requestError) {
       if (!mountedRef.current) return
+      const canRetry = !(requestError instanceof ApiError)
+        || [408, 429, 500, 502, 503, 504].includes(requestError.status)
+      setCanRetryEvaluation(canRetry)
+      if (!canRetry) pendingRecordingRef.current = null
       setError(
-        requestError instanceof Error
+        requestError instanceof ApiError
           ? requestError.message
-          : 'Please retry again.',
+          : 'We could not connect to speech evaluation. Please check your connection and try again.',
       )
       updateStatus('failed')
     }
@@ -216,11 +229,20 @@ export function AudioRecorder({
   function handleReset() {
     clearTimer()
     releaseMicrophone()
+    pendingRecordingRef.current = null
+    setCanRetryEvaluation(false)
     setError('')
     setResult(null)
     setShowSolutions(false)
     updateStatus('active')
     startSessionTimer()
+  }
+
+  function retryEvaluation() {
+    const audio = pendingRecordingRef.current
+    if (audio && statusRef.current === 'failed') {
+      void evaluateRecording(audio)
+    }
   }
 
   const isFinished = status === 'evaluating' || status === 'complete' || status === 'expired' || status === 'failed'
@@ -287,12 +309,28 @@ export function AudioRecorder({
       {(status === 'expired' || status === 'failed') && !result && (
         <div className="expired-card">
           <div className="expired-icon" aria-hidden="true">{status === 'failed' ? '↻' : '⏱️'}</div>
-          <h2>{status === 'failed' ? 'Evaluation unsuccessful' : 'Time Expired'}</h2>
+          <h2>{status === 'failed'
+            ? canRetryEvaluation ? 'Evaluation temporarily unavailable' : 'Evaluation unsuccessful'
+            : 'Time Expired'}</h2>
           <p>{error || 'The countdown reached zero before an answer was recorded.'}</p>
+          {canRetryEvaluation && (
+            <p>Your recording is kept on this page. You can retry evaluation without recording again. Leaving or refreshing this page will discard it.</p>
+          )}
           <div className="button-row">
-            <button className="button" type="button" onClick={handleReset}>
-              Try Again
-            </button>
+            {canRetryEvaluation ? (
+              <>
+                <button className="button" type="button" onClick={retryEvaluation}>
+                  Retry evaluation
+                </button>
+                <button className="button secondary" type="button" onClick={handleReset}>
+                  Record again
+                </button>
+              </>
+            ) : (
+              <button className="button" type="button" onClick={handleReset}>
+                Try Again
+              </button>
+            )}
             <a className="button secondary" href={`/practice/${sourceCode}/${targetCode}/exercises`}>
               Back to Exercises
             </a>

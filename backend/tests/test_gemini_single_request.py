@@ -60,7 +60,11 @@ class GeminiRetryTests(unittest.TestCase):
                 ):
                     self.call_with_transport(handler)
 
-                self.assertEqual(str(failure.exception), "Please retry again.")
+                if code == 429:
+                    self.assertIn("usage limit", str(failure.exception))
+                else:
+                    self.assertIn("temporarily unavailable", str(failure.exception))
+                self.assertEqual(failure.exception.status_code, 503)
                 self.assertEqual(len(requests), 1)
 
     def test_network_timeout_is_retried_only_once(self):
@@ -76,7 +80,7 @@ class GeminiRetryTests(unittest.TestCase):
         ):
             self.call_with_transport(handler)
 
-        self.assertEqual(str(failure.exception), "Please retry again.")
+        self.assertIn("too long to respond", str(failure.exception))
         self.assertEqual(len(requests), 2)
 
     def test_temporary_errors_are_retried_only_once(self):
@@ -96,7 +100,13 @@ class GeminiRetryTests(unittest.TestCase):
                 ):
                     self.call_with_transport(handler)
 
-                self.assertEqual(str(failure.exception), "Please retry again.")
+                if code == 503:
+                    self.assertIn("temporarily busy", str(failure.exception))
+                elif code in (408, 504):
+                    self.assertIn("too long to respond", str(failure.exception))
+                else:
+                    self.assertIn("temporarily unavailable", str(failure.exception))
+                self.assertEqual(failure.exception.status_code, 503)
                 self.assertEqual(len(requests), 2)
 
     def test_retry_can_recover_after_a_gateway_timeout(self):
