@@ -326,6 +326,28 @@ h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); }
 .expired-card h2 { margin: 0 0 8px; color: var(--ink); }
 .expired-card p { color: var(--muted); margin-bottom: 20px; }
 .expired-card .button-row, .action-footer { justify-content: center; margin-top: 24px; }
+.recovery-actions { display: flex; justify-content: center; align-items: stretch; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+.recovery-actions > .button { box-sizing: border-box; min-height: 46px; border: 1px solid transparent; }
+.recovery-actions > .button.secondary { background: var(--surface); border-color: var(--rose); box-shadow: 0 2px 4px var(--rose-glow); }
+.recovery-actions > .button.secondary:hover { background: var(--rose-hover); border-color: var(--rose-deep); box-shadow: 0 4px 10px var(--rose-glow); }
+.recovery-actions > .button:focus-visible { outline: 2px solid var(--rose-deep); outline-offset: 3px; }
+.evaluation-recovery { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 18px; padding: clamp(20px, 4vw, 32px); text-align: left; border-style: solid; }
+.evaluation-recovery .expired-icon { display: grid; place-items: center; width: 44px; height: 44px; margin: 0; border-radius: 12px; color: var(--rose); background: var(--rose-soft); font-size: 1.8rem; line-height: 1; }
+.evaluation-recovery h2 { font-size: clamp(1.45rem, 3vw, 1.9rem); }
+.evaluation-recovery p { margin: 0; line-height: 1.6; }
+.expired-card .evaluation-apology { margin: 12px 0 8px; color: var(--rose-deep); font-size: 1.05rem; font-weight: 700; line-height: 1.5; }
+.recovery-recording-note { margin-top: 20px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.recovery-recording-note strong { display: block; margin-bottom: 4px; color: var(--ink); font-size: .92rem; }
+.recovery-recording-note p { font-size: .88rem; }
+.evaluation-recovery .recovery-actions { justify-content: flex-start; }
+.evaluation-recovery .recovery-actions > .button { flex: 1 1 160px; }
+.evaluation-recovery .recovery-discard-note { margin-top: 16px; font-size: .8rem; }
+@media (max-width: 540px) {
+  .evaluation-recovery { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .evaluation-recovery .recovery-actions { flex-direction: column; }
+  .evaluation-recovery .recovery-actions > .button { flex: auto; width: 100%; }
+}
+
 .modal-backdrop { position: fixed; inset: 0; background: rgba(49, 32, 42, .42); backdrop-filter: blur(5px); display: grid; place-items: center; z-index: 100; padding: 20px; }
 .modal-card { width: min(480px, 100%); background: var(--surface); border-radius: 20px; padding: 34px; box-shadow: 0 24px 60px rgba(0,0,0,0.22); border: 1px solid var(--line); animation: modal-in .2s ease-out; }
 .modal-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }

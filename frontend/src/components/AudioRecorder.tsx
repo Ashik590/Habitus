@@ -311,33 +311,36 @@ export function AudioRecorder({
       )}
 
       {(status === 'expired' || status === 'failed') && !result && (
-        <div className="expired-card">
+        <div className={canRetryEvaluation ? 'expired-card evaluation-recovery' : 'expired-card'}>
           <div className="expired-icon" aria-hidden="true">{status === 'failed' ? '↻' : '⏱️'}</div>
-          <h2>{status === 'failed'
-            ? canRetryEvaluation ? 'Evaluation temporarily unavailable' : 'Evaluation unsuccessful'
-            : 'Time Expired'}</h2>
-          <p>{error || 'The countdown reached zero before an answer was recorded.'}</p>
-          {canRetryEvaluation && (
-            <p>Your recording is kept on this page. You can retry evaluation without recording again. Leaving or refreshing this page will discard it.</p>
-          )}
-          <div className="button-row">
-            {canRetryEvaluation ? (
-              <>
-                <button className="button" type="button" onClick={retryEvaluation}>
-                  Retry evaluation
-                </button>
+          <div className="recovery-content">
+            <h2>{status === 'failed'
+              ? canRetryEvaluation ? 'Evaluation temporarily unavailable' : 'Evaluation unsuccessful'
+              : 'Time Expired'}</h2>
+            {status === 'failed' && <p className="evaluation-apology">Sorry for the interruption.</p>}
+            <p>{error || 'The countdown reached zero before an answer was recorded.'}</p>
+            {canRetryEvaluation && (
+              <div className="recovery-recording-note">
+                <strong>Your recording is ready to resubmit</strong>
+                <p>No need to record again. Keep this page open to retain your recording.</p>
+              </div>
+            )}
+            <div className="recovery-actions">
+              <button className="button" type="button" onClick={canRetryEvaluation ? retryEvaluation : handleReset}>
+                {canRetryEvaluation ? 'Resubmit recording' : 'Try again'}
+              </button>
+              {canRetryEvaluation && (
                 <button className="button secondary" type="button" onClick={handleReset}>
                   Record again
                 </button>
-              </>
-            ) : (
-              <button className="button" type="button" onClick={handleReset}>
-                Try Again
-              </button>
+              )}
+              <a className="button secondary" href={`/practice/${sourceCode}/${targetCode}/exercises`}>
+                Back to exercises
+              </a>
+            </div>
+            {canRetryEvaluation && (
+              <p className="recovery-discard-note">Refreshing or leaving this page will discard your recording.</p>
             )}
-            <a className="button secondary" href={`/practice/${sourceCode}/${targetCode}/exercises`}>
-              Back to Exercises
-            </a>
           </div>
         </div>
       )}
