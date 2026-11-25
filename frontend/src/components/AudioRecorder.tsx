@@ -38,6 +38,7 @@ export function AudioRecorder({
   const [feedbackLanguage, setFeedbackLanguage] = useState<'en' | 'bn'>('en')
   const [result, setResult] = useState<EvaluationResponse | null>(null)
   const [showSolutions, setShowSolutions] = useState(false)
+  const [showFeedback, setShowFeedback] = useState(false)
   const [error, setError] = useState('')
   const [canRetryEvaluation, setCanRetryEvaluation] = useState(false)
 
@@ -148,6 +149,7 @@ export function AudioRecorder({
       if (!mountedRef.current) return
       pendingRecordingRef.current = null
       setShowSolutions(false)
+      setShowFeedback(false)
       setResult(evaluation)
       updateStatus('complete')
     } catch (requestError) {
@@ -182,6 +184,7 @@ export function AudioRecorder({
     setError('')
     setResult(null)
     setShowSolutions(false)
+    setShowFeedback(false)
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
@@ -234,6 +237,7 @@ export function AudioRecorder({
     setError('')
     setResult(null)
     setShowSolutions(false)
+    setShowFeedback(false)
     updateStatus('active')
     startSessionTimer()
   }
@@ -371,27 +375,48 @@ export function AudioRecorder({
               </div>
             ))}
           </div>
-          <div className="feedback-box">
-            <h2>Feedback</h2>
-            {result.feedback.length > 0 ? (
-              <ul>
-                {result.feedback.map((problem, index) => (
-                  <li key={`${index}-${problem}`}>{problem}</li>
-                ))}
-              </ul>
-            ) : (
-              <p>
-                {feedbackLanguage === 'bn'
-                  ? 'কোনো উল্লেখযোগ্য সমস্যা শনাক্ত করা যায়নি।'
-                  : 'No significant problems detected.'}
-              </p>
-            )}
+          <div className="button-row action-footer">
+            <button
+              className="button secondary result-toggle"
+              type="button"
+              aria-expanded={showFeedback}
+              aria-controls="evaluation-feedback"
+              onClick={() => setShowFeedback((visible) => !visible)}
+            >
+              {showFeedback ? 'Hide feedback' : 'View feedback'}
+              <span className="result-toggle-chevron" aria-hidden="true" />
+            </button>
+          </div>
+          <div
+            id="evaluation-feedback"
+            className={`result-disclosure${showFeedback ? ' is-open' : ''}`}
+            aria-hidden={!showFeedback}
+            inert={!showFeedback}
+          >
+            <div className="result-disclosure-content">
+              <div className="feedback-box">
+                <h2>Feedback</h2>
+                {result.feedback.length > 0 ? (
+                  <ul>
+                    {result.feedback.map((problem, index) => (
+                      <li key={`${index}-${problem}`}>{problem}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>
+                    {feedbackLanguage === 'bn'
+                      ? 'কোনো উল্লেখযোগ্য সমস্যা শনাক্ত করা যায়নি।'
+                      : 'No significant problems detected.'}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
           {result.is_valid_response && result.recommended_translations.length > 0 && (
             <>
               <div className="button-row action-footer">
                 <button
-                  className="button secondary"
+                  className="button secondary result-toggle"
                   type="button"
                   aria-expanded={showSolutions}
                   aria-controls="recommended-translations"
@@ -400,18 +425,26 @@ export function AudioRecorder({
                   {showSolutions
                     ? 'Hide recommended translations'
                     : 'View recommended translations'}
+                  <span className="result-toggle-chevron" aria-hidden="true" />
                 </button>
               </div>
-              {showSolutions && (
-                <div id="recommended-translations" className="translations">
-                  <h2>Recommended translations</h2>
-                  <ul>
-                    {result.recommended_translations.map((translation) => (
-                      <li key={translation}>{translation}</li>
-                    ))}
-                  </ul>
+              <div
+                id="recommended-translations"
+                className={`result-disclosure${showSolutions ? ' is-open' : ''}`}
+                aria-hidden={!showSolutions}
+                inert={!showSolutions}
+              >
+                <div className="result-disclosure-content">
+                  <div className="translations">
+                    <h2>Recommended translations</h2>
+                    <ul>
+                      {result.recommended_translations.map((translation) => (
+                        <li key={translation}>{translation}</li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-              )}
+              </div>
             </>
           )}
           <div className="button-row action-footer">
