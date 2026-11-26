@@ -86,10 +86,14 @@ async def list_exercises(
     score_col = (
         UserExercise.overall_score if current_user is not None else literal(None)
     ).label("overall_score")
+    ordering = [Exercise.exercise_id]
+    if current_user is None:
+        # Apply guest access ordering before pagination, with a stable ID tie-breaker.
+        ordering.insert(0, Exercise.is_public.desc())
     query = (
         select(Exercise, score_col, func.count().over().label("total_count"))
         .where(*filters)
-        .order_by(Exercise.exercise_id)
+        .order_by(*ordering)
         .limit(limit)
         .offset(offset)
     )
