@@ -111,9 +111,59 @@
   }
 
   .exercise-row {
-    grid-template-columns: 42px minmax(0, 1fr) 18px;
-    gap: 12px;
-    padding: 16px;
+    grid-template-columns: 36px minmax(0, 1fr) auto 14px;
+    gap: 8px;
+    padding: 16px 12px;
+  }
+
+  .exercise-row > .level-badge {
+    grid-column: 1;
+    grid-row: 1;
+    width: 36px;
+  }
+
+  .exercise-row .exercise-title {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  .exercise-row .exercise-progress {
+    display: none;
+  }
+
+  .exercise-row .exercise-progress.completed-badge {
+    display: inline-flex;
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
+    gap: 3px;
+    padding: 5px 7px;
+    font-size: .74rem;
+    white-space: nowrap;
+  }
+
+  .exercise-row .row-arrow {
+    grid-column: 4;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .page-heading > div {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .level-filter {
+    width: 100%;
+    gap: 4px;
+    overflow-x: auto;
+  }
+
+  .level-filter button {
+    flex: 1 0 34px;
+    min-height: 44px;
+    padding: 8px 6px;
   }
 
   .exercise-title,
