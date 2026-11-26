@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
+import { PasswordField } from '../components/PasswordField'
 
 export function LoginPage() {
   const { login } = useAuth()
@@ -30,7 +31,7 @@ export function LoginPage() {
       {registration?.registeredUsername && <p role="status">Your account is ready. Log in to start practising.</p>}
       <form onSubmit={handleSubmit}>
         <label>Username<input value={username} onChange={(event) => setUsername(event.target.value)} minLength={3} maxLength={30} autoComplete="username" autoCapitalize="none" spellCheck={false} required /></label>
-        <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} maxLength={128} autoComplete="current-password" required /></label>
+        <PasswordField value={password} onChange={setPassword} autoComplete="current-password" />
         {error && <p className="form-error">{error}</p>}
         <button className="button" type="submit" disabled={submitting}>{submitting ? 'Logging in…' : 'Log in'}</button>
       </form>

@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { PasswordField } from '../components/PasswordField'
 import { api } from '../lib/api'
 import type { Language } from '../types/api'
 
@@ -81,7 +82,7 @@ export function RegisterPage() {
         </label>
         <p className="form-hint" id="username-hint">Use 3–30 English letters, numbers, or underscores. Start with a letter. Usernames are case-insensitive.</p>
         <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={320} autoComplete="email" /></label>
-        <label><span>Password <span className="required-mark" aria-hidden="true">*</span></span><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={128} autoComplete="new-password" required /></label>
+        <PasswordField value={password} onChange={setPassword} autoComplete="new-password" minLength={8} showRequiredMark />
         <label>
           <span>Native language <span className="required-mark" aria-hidden="true">*</span></span>
           <select value={nativeLanguageCode} onChange={(event) => {
