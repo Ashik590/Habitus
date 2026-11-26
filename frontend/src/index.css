@@ -289,8 +289,11 @@ h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); }
 .exercise-row:hover { background: var(--surface-raised); }
 .exercise-row.completed { background: var(--rose-soft); border-left: 4px solid var(--rose); }
 .exercise-row.completed:hover { background: var(--rose-hover); }
-.exercise-row.locked { background: var(--surface-subtle); }
+.exercise-row.locked { background: #ffffff;opacity: 0.6; }
 .exercise-row.locked:hover { background: var(--surface-raised); }
+.exercise-row.locked .level-badge { opacity: .7; filter: saturate(.5); }
+.exercise-row.locked .exercise-name { opacity: .68; }
+.exercise-row .row-arrow { grid-column: 4; grid-row: 1; justify-self: end; }
 .exercise-row.locked .row-arrow { color: var(--muted); }
 .exercise-lock-icon { display: block; flex-shrink: 0; }
 .row-arrow .exercise-lock-icon { width: 14px; height: 14px; }

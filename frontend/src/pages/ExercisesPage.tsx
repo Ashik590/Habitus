@@ -103,7 +103,7 @@ export function ExercisesPage() {
           const isLocked = !user && (exercise.is_locked || !exercise.is_public)
           return (
             <button
-              className={`exercise-row exercise-row-btn ${exercise.completed ? 'completed' : ''} ${isLocked ? 'locked' : ''}`}
+              className={`exercise-row exercise-row-btn ${user && exercise.completed ? 'completed' : ''} ${isLocked ? 'locked' : ''}`}
               key={exercise.exercise_id}
               type="button"
               onClick={() => setPendingExercise(exercise)}
@@ -111,16 +111,16 @@ export function ExercisesPage() {
             >
               <span className={`level-badge level-${exercise.level.toLowerCase()}`}>{exercise.level}</span>
               <span className="exercise-title">
-                Exercise #{exercise.exercise_id}
-                <small>{exercise.time_limit_seconds}s limit{!user && (isLocked ? ' · Sign in required' : ' · Public sample')}</small>
+                <span className="exercise-name">Exercise #{exercise.exercise_id}</span>
+                <small>{exercise.time_limit_seconds}s limit</small>
               </span>
-              {exercise.completed ? (
+              {user && (exercise.completed ? (
                 <span className="exercise-progress completed-badge">
                   ✓ {exercise.overall_score}%
                 </span>
               ) : (
-                <span className="exercise-progress">{isLocked ? 'Locked' : 'Not started'}</span>
-              )}
+                <span className="exercise-progress">Not started</span>
+              ))}
               <span className="row-arrow" aria-hidden="true">{isLocked ? <ExerciseLockIcon /> : '→'}</span>
             </button>
           )
