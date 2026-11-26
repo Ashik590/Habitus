@@ -10,7 +10,7 @@ from app.models.exercise import Exercise
 from app.models.language import Language
 from app.models.user import User
 from app.models.user_exercise import UserExercise
-from app.schemas.exercise import CEFRLevel, ExerciseListResponse, ExercisePublic
+from app.schemas.exercise import CEFRLevel, ExerciseListResponse, ExercisePublic, ExerciseSummary
 
 
 router = APIRouter(
@@ -51,6 +51,15 @@ def enforce_native_language(user: User | None, source: Language) -> None:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Signed-in users must practise from their native language.",
+        )
+
+
+def enforce_exercise_access(user: User | None, exercise: Exercise) -> None:
+    if user is None and not exercise.is_public:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Sign in to practise this exercise.",
+            headers={"WWW-Authenticate": "Bearer"},
         )
 
 
@@ -99,11 +108,12 @@ async def list_exercises(
 
     return ExerciseListResponse(
         items=[
-            ExercisePublic(
+            ExerciseSummary(
                 exercise_id=exercise.exercise_id,
                 level=exercise.level,
-                source_text=exercise.source_text,
                 time_limit_seconds=exercise.time_limit_seconds,
+                is_public=exercise.is_public,
+                is_locked=current_user is None and not exercise.is_public,
                 completed=overall_score is not None,
                 overall_score=(
                     float(overall_score) if overall_score is not None else None
@@ -141,6 +151,8 @@ async def get_exercise(
             detail="Exercise not found.",
         )
 
+    enforce_exercise_access(current_user, exercise)
+
     overall_score = None
     if current_user is not None:
         stored_score = await session.scalar(
@@ -156,6 +168,8 @@ async def get_exercise(
         level=exercise.level,
         source_text=exercise.source_text,
         time_limit_seconds=exercise.time_limit_seconds,
+        is_public=exercise.is_public,
+        is_locked=False,
         completed=overall_score is not None,
         overall_score=overall_score,
     )

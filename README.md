@@ -33,6 +33,30 @@ users and their saved scores before introducing the required fields. This reset
 was chosen for the learning project. Exercise content and languages are retained;
 deleted account data cannot be restored by downgrading the migration.
 
+## Public exercise samples
+
+Exercises use `is_public` to control guest access. Guests can browse the catalog
+metadata and practise public samples; other exercises require login for both
+the prompt and evaluation API. Signed-in users can access all active exercises
+in their native-language direction. List responses never include prompts or
+preferred solutions, even for signed-in users.
+
+Migration `d7e9f3a52b01` makes the first two active exercises, ordered by ID, public
+within each CEFR level and language pair. It preserves accounts and scores.
+New exercises default to `is_public = false`; change individual flags in Supabase
+to curate the public samples. This flag is independent of `is_active`.
+
+Catalog exports preserve `is_public`. Older exports without this flag import as
+locked exercises, so select their public samples explicitly after import.
+
+For example, after choosing an exercise ID from your catalog:
+
+```sql
+-- Replace 42 with the exercise you want to make public.
+UPDATE public.exercises SET is_public = true WHERE exercise_id = 42;
+-- Use false instead of true to require login again.
+```
+
 ## Development
 
 Use Python 3.12, Node.js 24, and PostgreSQL. From the repository root:

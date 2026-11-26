@@ -18,8 +18,14 @@ export function LoginPage() {
     setSubmitting(true)
     setError('')
     try {
-      await login(username.trim(), password)
-      navigate(registration?.from ?? '/practice', { replace: true })
+      const account = await login(username.trim(), password)
+      const from = registration?.from
+      const requestedPair = from?.match(/^\/practice\/([^/]+)\/([^/]+)\/exercises(?:\/\d+)?$/)
+      const savedPractice = `/practice/${account.native_language.code}/${account.target_language.code}/exercises`
+      const destination = requestedPair && requestedPair[1] !== account.native_language.code
+        ? savedPractice
+        : from?.startsWith('/') && !from.startsWith('//') ? from : '/practice'
+      navigate(destination, { replace: true })
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Login failed.')
     } finally { setSubmitting(false) }
@@ -35,7 +41,7 @@ export function LoginPage() {
         {error && <p className="form-error">{error}</p>}
         <button className="button" type="submit" disabled={submitting}>{submitting ? 'Logging in…' : 'Log in'}</button>
       </form>
-      <p>New here? <Link to="/register">Create an account</Link>.</p>
+      <p>New here? <Link to="/register" state={{ from: registration?.from }}>Create an account</Link>.</p>
     </section>
   )
 }

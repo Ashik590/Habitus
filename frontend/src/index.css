@@ -289,6 +289,15 @@ h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); }
 .exercise-row:hover { background: var(--surface-raised); }
 .exercise-row.completed { background: var(--rose-soft); border-left: 4px solid var(--rose); }
 .exercise-row.completed:hover { background: var(--rose-hover); }
+.exercise-row.locked { background: var(--surface-subtle); }
+.exercise-row.locked:hover { background: var(--surface-raised); }
+.exercise-row.locked .row-arrow { color: var(--muted); }
+.exercise-lock-icon { display: block; flex-shrink: 0; }
+.row-arrow .exercise-lock-icon { width: 14px; height: 14px; }
+.exercise-access-notice > p:not(.eyebrow) { color: var(--muted); line-height: 1.65; }
+.exercise-access-notice h2 { margin: 0 0 12px; }
+.exercise-access-notice .button-row { margin-top: 24px; }
+.exercise-access-icon { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 18px; border: 1px solid var(--rose-border); border-radius: 12px; color: var(--rose); background: var(--rose-soft); }
 .exercise-progress.completed-badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--rose-border); color: var(--rose-deep); font-weight: 700; font-family: var(--font-mono); font-size: 0.82rem; box-shadow: var(--shadow-sm); }
 .exercise-row.completed .row-arrow { color: var(--rose); font-weight: 700; }
 .exercise-row-btn { width: 100%; border: 0; background: transparent; font: inherit; text-align: left; cursor: pointer; }

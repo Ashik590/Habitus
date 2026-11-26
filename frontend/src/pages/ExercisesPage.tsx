@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
+import { ExerciseAccessNotice, ExerciseLockIcon } from '../components/ExerciseAccessNotice'
 import { api } from '../lib/api'
-import type { CefrLevel, Exercise } from '../types/api'
+import type { CefrLevel, ExerciseSummary } from '../types/api'
 
 const levels: Array<CefrLevel | 'All'> = ['All', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const languageNames: Record<string, string> = {
@@ -16,7 +17,7 @@ export function ExercisesPage() {
   const { sourceCode = 'bn', targetCode = 'en' } = useParams()
   const { accessToken, isInitializing, user } = useAuth()
   const [selectedLevel, setSelectedLevel] = useState<CefrLevel | 'All'>('All')
-  const [exercises, setExercises] = useState<Exercise[]>([])
+  const [exercises, setExercises] = useState<ExerciseSummary[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -63,7 +64,9 @@ export function ExercisesPage() {
     }
   }
 
-  const [pendingExercise, setPendingExercise] = useState<Exercise | null>(null)
+  const [pendingExercise, setPendingExercise] = useState<ExerciseSummary | null>(null)
+  const pendingIsLocked = pendingExercise !== null && !user
+    && (pendingExercise.is_locked || !pendingExercise.is_public)
 
   function selectLevel(level: CefrLevel | 'All') {
     setLoading(true)
@@ -84,6 +87,7 @@ export function ExercisesPage() {
           <p className="eyebrow page-kicker">{sourceLanguageName} → {targetLanguageName}</p>
           <h1>Exercises</h1>
           <p className="heading-copy">Select an exercise to test your spoken translation under calibrated time limits.</p>
+          {!user && <p className="form-hint">Try the public samples, or sign in to unlock all exercises.</p>}
         </div>
         <div className="level-filter" aria-label="Filter by CEFR level">
           {levels.map((level) => (
@@ -95,28 +99,32 @@ export function ExercisesPage() {
       {error && <p className="status-message error">{error}</p>}
       {!loading && !error && exercises.length === 0 && <p className="status-message">No exercises are available at this level.</p>}
       <div className="exercise-list">
-        {exercises.map((exercise) => (
-          <button
-            className={`exercise-row exercise-row-btn ${exercise.completed ? 'completed' : ''}`}
-            key={exercise.exercise_id}
-            type="button"
-            onClick={() => setPendingExercise(exercise)}
-          >
-            <span className={`level-badge level-${exercise.level.toLowerCase()}`}>{exercise.level}</span>
-            <span className="exercise-title">
-              Exercise #{exercise.exercise_id}
-              <small>{exercise.time_limit_seconds}s limit</small>
-            </span>
-            {exercise.completed ? (
-              <span className="exercise-progress completed-badge">
-                ✓ {exercise.overall_score}%
+        {exercises.map((exercise) => {
+          const isLocked = !user && (exercise.is_locked || !exercise.is_public)
+          return (
+            <button
+              className={`exercise-row exercise-row-btn ${exercise.completed ? 'completed' : ''} ${isLocked ? 'locked' : ''}`}
+              key={exercise.exercise_id}
+              type="button"
+              onClick={() => setPendingExercise(exercise)}
+              aria-label={isLocked ? `Exercise #${exercise.exercise_id}, ${exercise.level}, sign in required` : undefined}
+            >
+              <span className={`level-badge level-${exercise.level.toLowerCase()}`}>{exercise.level}</span>
+              <span className="exercise-title">
+                Exercise #{exercise.exercise_id}
+                <small>{exercise.time_limit_seconds}s limit{!user && (isLocked ? ' · Sign in required' : ' · Public sample')}</small>
               </span>
-            ) : (
-              <span className="exercise-progress">Not started</span>
-            )}
-            <span className="row-arrow" aria-hidden="true">→</span>
-          </button>
-        ))}
+              {exercise.completed ? (
+                <span className="exercise-progress completed-badge">
+                  ✓ {exercise.overall_score}%
+                </span>
+              ) : (
+                <span className="exercise-progress">{isLocked ? 'Locked' : 'Not started'}</span>
+              )}
+              <span className="row-arrow" aria-hidden="true">{isLocked ? <ExerciseLockIcon /> : '→'}</span>
+            </button>
+          )
+        })}
       </div>
 
       {exercises.length < total && (
@@ -136,31 +144,45 @@ export function ExercisesPage() {
       {pendingExercise && (
         <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
           <div className="modal-card">
-            <div className="modal-header">
-              <span className={`level-badge level-${pendingExercise.level.toLowerCase()}`}>{pendingExercise.level}</span>
-              <p className="eyebrow">Timed Practice Session</p>
-            </div>
-            <h2 id="modal-title">Exercise #{pendingExercise.exercise_id}</h2>
-            <div className="modal-body">
-              <p>
-                Once you begin, the <strong>{pendingExercise.time_limit_seconds}-second countdown</strong> starts immediately.
-              </p>
-              <p className="modal-hint">
-                Formulate your translation and record your answer before the clock reaches zero. The prompt will disappear when the timer ends.
-              </p>
-            </div>
-            <div className="modal-actions">
-              <button className="button secondary" type="button" onClick={() => setPendingExercise(null)}>
-                Cancel
-              </button>
-              <Link
-                className="button"
-                to={`/practice/${sourceCode}/${targetCode}/exercises/${pendingExercise.exercise_id}`}
-                onClick={() => setPendingExercise(null)}
-              >
-                I'm Ready · Start
-              </Link>
-            </div>
+            {pendingIsLocked ? (
+              <>
+                <ExerciseAccessNotice
+                  headingId="modal-title"
+                  exercisePath={`/practice/${sourceCode}/${targetCode}/exercises/${pendingExercise.exercise_id}`}
+                />
+                <div className="modal-actions">
+                  <button className="button secondary" type="button" onClick={() => setPendingExercise(null)}>Back to exercises</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="modal-header">
+                  <span className={`level-badge level-${pendingExercise.level.toLowerCase()}`}>{pendingExercise.level}</span>
+                  <p className="eyebrow">Timed Practice Session</p>
+                </div>
+                <h2 id="modal-title">Exercise #{pendingExercise.exercise_id}</h2>
+                <div className="modal-body">
+                  <p>
+                    Once you begin, the <strong>{pendingExercise.time_limit_seconds}-second countdown</strong> starts immediately.
+                  </p>
+                  <p className="modal-hint">
+                    Formulate your translation and record your answer before the clock reaches zero. The prompt will disappear when the timer ends.
+                  </p>
+                </div>
+                <div className="modal-actions">
+                  <button className="button secondary" type="button" onClick={() => setPendingExercise(null)}>
+                    Cancel
+                  </button>
+                  <Link
+                    className="button"
+                    to={`/practice/${sourceCode}/${targetCode}/exercises/${pendingExercise.exercise_id}`}
+                    onClick={() => setPendingExercise(null)}
+                  >
+                    I'm Ready · Start
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

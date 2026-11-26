@@ -45,6 +45,7 @@ async def transfer(args: argparse.Namespace) -> None:
                             "source_text": exercise.source_text,
                             "preferred_solutions": exercise.preferred_solutions,
                             "time_limit_seconds": exercise.time_limit_seconds,
+                            "is_public": exercise.is_public,
                             "is_active": exercise.is_active,
                         }
                         for exercise in exercises
@@ -82,6 +83,8 @@ async def transfer(args: argparse.Namespace) -> None:
                 values = dict(data)
                 source_code = values.pop("source_code")
                 target_code = values.pop("target_code")
+                # Older exports lack access flags; keep those exercises locked.
+                values.setdefault("is_public", False)
                 session.add(Exercise(
                     source_language_id=existing[source_code].language_id,
                     target_language_id=existing[target_code].language_id,

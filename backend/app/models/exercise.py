@@ -62,6 +62,11 @@ class Exercise(Base):
     source_text: Mapped[str] = mapped_column(Text)
     preferred_solutions: Mapped[list[str]] = mapped_column(ARRAY(Text))
     time_limit_seconds: Mapped[int]
+    is_public: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        server_default=text("false"),
+    )
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         default=True,

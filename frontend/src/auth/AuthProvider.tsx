@@ -62,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const currentUser = await api.getCurrentUser(tokens.access_token)
     setAccessToken(tokens.access_token)
     setUser(currentUser)
+    return currentUser
   }
 
   async function logout() {

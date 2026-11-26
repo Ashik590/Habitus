@@ -31,17 +31,22 @@ export interface AccessTokenResponse {
   token_type: string
 }
 
-export interface Exercise {
+export interface ExerciseSummary {
   exercise_id: number
   level: CefrLevel
-  source_text: string
   time_limit_seconds: number
+  is_public: boolean
+  is_locked: boolean
   completed: boolean
   overall_score: number | null
 }
 
+export interface Exercise extends ExerciseSummary {
+  source_text: string
+}
+
 export interface ExerciseListResponse {
-  items: Exercise[]
+  items: ExerciseSummary[]
   total: number
   limit: number
   offset: number

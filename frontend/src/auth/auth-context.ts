@@ -6,7 +6,7 @@ export interface AuthContextValue {
   user: User | null
   isAuthenticated: boolean
   isInitializing: boolean
-  login: (username: string, password: string) => Promise<void>
+  login: (username: string, password: string) => Promise<User>
   logout: () => Promise<void>
   updateNativeLanguage: (languageCode: string) => Promise<void>
   updateTargetLanguage: (languageCode: string) => Promise<void>

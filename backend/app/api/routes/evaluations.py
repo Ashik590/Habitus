@@ -9,7 +9,7 @@ from sqlalchemy.orm import joinedload
 
 from app.api.dependencies.auth import get_optional_current_user
 from app.db.session import get_database_session
-from app.api.routes.exercises import enforce_native_language, resolve_language_pair
+from app.api.routes.exercises import enforce_exercise_access, enforce_native_language, resolve_language_pair
 from app.models.exercise import Exercise
 from app.models.user import User
 from app.models.user_exercise import UserExercise
@@ -118,6 +118,8 @@ async def evaluate_exercise(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Exercise not found.",
         )
+
+    enforce_exercise_access(current_user, exercise)
 
     mime_type = (audio.content_type or "").split(";", maxsplit=1)[0].lower()
     if mime_type not in SUPPORTED_AUDIO_TYPES:

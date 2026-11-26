@@ -44,6 +44,13 @@ in a clean container yet. Resolve any installation/build failure before release.
 
 ## 3. Create the hosted schema and copy exercises
 
+Migration `d7e9f3a52b01` adds `exercises.is_public`, locked by default, and exposes
+two existing active samples per CEFR level and language pair. It does not delete
+users, scores, or exercises. Review the public selections in Supabase after the
+migration. Catalog imports preserve access flags; older exports without flags
+remain locked until you explicitly make samples public. Deploy the frontend and
+backend together because list responses now return metadata without prompts.
+
 Migration `c6d8e2f41a90` deletes existing accounts and their saved exercise scores
 as part of the authorized account reset. It keeps exercises and languages.
 Review this migration before running `upgrade head` or deploying: Docker startup

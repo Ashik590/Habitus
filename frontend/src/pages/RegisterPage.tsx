@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { PasswordField } from '../components/PasswordField'
 import { api } from '../lib/api'
 import type { Language } from '../types/api'
@@ -21,12 +21,15 @@ function isValidName(value: string) {
 
 export function RegisterPage() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const entry = location.state as { from?: string } | null
+  const requestedPair = entry?.from?.match(/^\/practice\/([^/]+)\/([^/]+)\/exercises\/\d+$/)
   const [name, setName] = useState('')
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [nativeLanguageCode, setNativeLanguageCode] = useState('bn')
-  const [targetLanguageCode, setTargetLanguageCode] = useState('en')
+  const [nativeLanguageCode, setNativeLanguageCode] = useState(requestedPair?.[1] ?? 'bn')
+  const [targetLanguageCode, setTargetLanguageCode] = useState(requestedPair?.[2] ?? 'en')
   const [languages, setLanguages] = useState<Language[]>([])
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -64,7 +67,7 @@ export function RegisterPage() {
         native_language_code: nativeLanguageCode,
         target_language_code: targetLanguageCode,
       })
-      navigate('/login', { replace: true, state: { registeredUsername: account.username } })
+      navigate('/login', { replace: true, state: { registeredUsername: account.username, from: entry?.from } })
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Registration failed.')
     } finally { setSubmitting(false) }
@@ -108,7 +111,7 @@ export function RegisterPage() {
         {error && <p className="form-error">{error}</p>}
         <button className="button" type="submit" disabled={submitting || languages.length < 2}>{submitting ? 'Creating account…' : 'Create account'}</button>
       </form>
-      <p>Already registered? <Link to="/login">Log in</Link>.</p>
+      <p>Already registered? <Link to="/login" state={{ from: entry?.from }}>Log in</Link>.</p>
     </section>
   )
 }

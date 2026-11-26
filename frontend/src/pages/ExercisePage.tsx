@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { AudioRecorder } from '../components/AudioRecorder'
-import { api } from '../lib/api'
+import { ExerciseAccessNotice } from '../components/ExerciseAccessNotice'
+import { api, ApiError } from '../lib/api'
 import type { Exercise } from '../types/api'
 
 const languageNames: Record<string, string> = {
@@ -12,25 +13,54 @@ const languageNames: Record<string, string> = {
   es: 'Spanish',
 }
 
+interface ExerciseLoad {
+  key: string
+  exercise: Exercise | null
+  error: string
+  requiresLogin: boolean
+}
+
 export function ExercisePage() {
   const { sourceCode = 'bn', targetCode = 'en', exerciseId } = useParams()
-  const { accessToken } = useAuth()
-  const [exercise, setExercise] = useState<Exercise | null>(null)
-  const [error, setError] = useState('')
+  const { accessToken, user, isInitializing } = useAuth()
+  const [load, setLoad] = useState<ExerciseLoad>({ key: '', exercise: null, error: '', requiresLogin: false })
   const [isFinished, setIsFinished] = useState(false)
+  const exercisePath = `/practice/${sourceCode}/${targetCode}/exercises/${exerciseId}`
+  const listPath = `/practice/${sourceCode}/${targetCode}/exercises`
+  const requestKey = JSON.stringify([sourceCode, targetCode, exerciseId, user?.user_id ?? null])
 
   useEffect(() => {
-    if (!exerciseId) return
+    if (!exerciseId || isInitializing) return
+    let cancelled = false
     api.getExercise(sourceCode, targetCode, exerciseId, accessToken).then((loadedExercise) => {
+      if (cancelled) return
       setIsFinished(false)
-      setError('')
-      setExercise(loadedExercise)
+      setLoad({ key: requestKey, exercise: loadedExercise, error: '', requiresLogin: false })
     }).catch((requestError: unknown) => {
-      setError(requestError instanceof Error ? requestError.message : 'Could not load this exercise.')
+      if (cancelled) return
+      setLoad({
+        key: requestKey,
+        exercise: null,
+        error: requestError instanceof Error ? requestError.message : 'Could not load this exercise.',
+        requiresLogin: requestError instanceof ApiError && requestError.status === 401,
+      })
     })
-  }, [accessToken, exerciseId, sourceCode, targetCode])
+    return () => { cancelled = true }
+  }, [accessToken, exerciseId, sourceCode, targetCode, requestKey, isInitializing])
 
-  if (error) return <p className="status-message error">{error}</p>
+  if (isInitializing || load.key !== requestKey) return <p className="status-message">Loading exercise…</p>
+  if (load.requiresLogin) {
+    return (
+      <section className="practice-card">
+        <ExerciseAccessNotice exercisePath={exercisePath} />
+        <div className="button-row action-footer">
+          <Link className="back-link" to={listPath}>← All exercises</Link>
+        </div>
+      </section>
+    )
+  }
+  if (load.error) return <p className="status-message error">{load.error}</p>
+  const exercise = load.exercise
   if (!exercise) return <p className="status-message">Loading exercise…</p>
 
   const targetLanguageName = languageNames[targetCode] ?? targetCode.toUpperCase()
@@ -59,6 +89,7 @@ export function ExercisePage() {
       )}
 
       <AudioRecorder
+        key={requestKey}
         sourceCode={sourceCode}
         targetCode={targetCode}
         exerciseId={exercise.exercise_id}
