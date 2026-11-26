@@ -16,6 +16,23 @@ are not included. Gemini transcribes the audible response and evaluates it;
 recommended translations are generated independently from the source sentence.
 Neither Whisper nor browser speech recognition is used.
 
+## Accounts and practice preferences
+
+Signup requires a full name, unique username, password, native language, and
+target language. Email is optional; supplied addresses must be valid and unique.
+Usernames use 3–30 English letters, numbers, or underscores, start with a letter,
+and are stored in lowercase. Login requires a username and password.
+
+Signed-in visitors to `/practice` go directly to exercises for their saved
+language pair. Guests retain the language picker. The dashboard saves target
+language changes; choosing the saved target as a new native language swaps the
+pair in one update.
+
+Migration `c6d8e2f41a90` intentionally resets existing accounts: it deletes all
+users and their saved scores before introducing the required fields. This reset
+was chosen for the learning project. Exercise content and languages are retained;
+deleted account data cannot be restored by downgrading the migration.
+
 ## Development
 
 Use Python 3.12, Node.js 24, and PostgreSQL. From the repository root:

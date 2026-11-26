@@ -21,7 +21,7 @@ from app.models.user import User
 from app.models.user_exercise import UserExercise
 from app.schemas.exercise import CEFRLevel
 from app.schemas.statistics import DimensionAverages, LevelStatistics, StatisticsResponse
-from app.schemas.user import NativeLanguageUpdate, UserResponse
+from app.schemas.user import NativeLanguageUpdate, PracticeLanguagesUpdate, UserResponse
 
 
 router = APIRouter(prefix="/users", tags=["Users"])
@@ -50,8 +50,30 @@ async def update_native_language(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="The selected native language is unavailable.",
         )
+    if language.language_id == current_user.target_language_id:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Native and target languages must be different. Change your target language first.",
+        )
     current_user.native_language_id = language.language_id
     current_user.native_language = language
+    await session.commit()
+    return current_user
+
+
+@router.patch("/me/practice-languages", response_model=UserResponse)
+async def update_practice_languages(
+    update: PracticeLanguagesUpdate,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_database_session),
+) -> User:
+    native, target = await resolve_language_pair(
+        session, update.native_language_code, update.target_language_code,
+    )
+    current_user.native_language_id = native.language_id
+    current_user.native_language = native
+    current_user.target_language_id = target.language_id
+    current_user.target_language = target
     await session.commit()
     return current_user
 

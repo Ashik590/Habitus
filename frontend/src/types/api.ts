@@ -9,10 +9,21 @@ export interface Language {
 export interface User {
   user_id: string
   name: string
-  email: string
+  username: string
+  email: string | null
   is_active: boolean
   profile_picture_url: string | null
   native_language: Language
+  target_language: Language
+}
+
+export interface RegistrationRequest {
+  name: string
+  username: string
+  email?: string | null
+  password: string
+  native_language_code: string
+  target_language_code: string
 }
 
 export interface AccessTokenResponse {

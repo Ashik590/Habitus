@@ -6,7 +6,8 @@ export function LoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [email, setEmail] = useState('')
+  const registration = location.state as { registeredUsername?: string; from?: string } | null
+  const [username, setUsername] = useState(registration?.registeredUsername ?? '')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -16,8 +17,8 @@ export function LoginPage() {
     setSubmitting(true)
     setError('')
     try {
-      await login(email, password)
-      navigate((location.state as { from?: string } | null)?.from ?? '/profile', { replace: true })
+      await login(username.trim(), password)
+      navigate(registration?.from ?? '/practice', { replace: true })
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Login failed.')
     } finally { setSubmitting(false) }
@@ -26,9 +27,10 @@ export function LoginPage() {
   return (
     <section className="form-card">
       <p className="eyebrow">Welcome back</p><h1>Log in</h1>
+      {registration?.registeredUsername && <p role="status">Your account is ready. Log in to start practising.</p>}
       <form onSubmit={handleSubmit}>
-        <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
-        <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required /></label>
+        <label>Username<input value={username} onChange={(event) => setUsername(event.target.value)} minLength={3} maxLength={30} autoComplete="username" autoCapitalize="none" spellCheck={false} required /></label>
+        <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} maxLength={128} autoComplete="current-password" required /></label>
         {error && <p className="form-error">{error}</p>}
         <button className="button" type="submit" disabled={submitting}>{submitting ? 'Logging in…' : 'Log in'}</button>
       </form>

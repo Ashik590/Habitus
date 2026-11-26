@@ -44,6 +44,13 @@ in a clean container yet. Resolve any installation/build failure before release.
 
 ## 3. Create the hosted schema and copy exercises
 
+Migration `c6d8e2f41a90` deletes existing accounts and their saved exercise scores
+as part of the authorized account reset. It keeps exercises and languages.
+Review this migration before running `upgrade head` or deploying: Docker startup
+also applies pending migrations automatically. Deleted account data cannot be
+restored by downgrading. Existing users must register again with a username and
+target language after this migration.
+
 Create `backend/.env.production` in your editor (it is Git-ignored):
 
 ```dotenv

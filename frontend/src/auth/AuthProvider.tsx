@@ -57,8 +57,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => setRefreshHandler(null)
   }, [])
 
-  async function login(email: string, password: string) {
-    const tokens = await api.login(email, password)
+  async function login(username: string, password: string) {
+    const tokens = await api.login(username, password)
     const currentUser = await api.getCurrentUser(tokens.access_token)
     setAccessToken(tokens.access_token)
     setUser(currentUser)
@@ -75,8 +75,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function updateNativeLanguage(languageCode: string) {
-    if (!accessToken) throw new Error('Authentication is required.')
-    const updatedUser = await api.updateNativeLanguage(languageCode, accessToken)
+    if (!accessToken || !user) throw new Error('Authentication is required.')
+    // Swap the pair atomically if the new native language was the saved target.
+    const targetCode = languageCode === user.target_language.code
+      ? user.native_language.code
+      : user.target_language.code
+    const updatedUser = await api.updatePracticeLanguages(languageCode, targetCode, accessToken)
+    setUser(updatedUser)
+  }
+
+  async function updateTargetLanguage(languageCode: string) {
+    if (!accessToken || !user) throw new Error('Authentication is required.')
+    const updatedUser = await api.updatePracticeLanguages(user.native_language.code, languageCode, accessToken)
     setUser(updatedUser)
   }
 
@@ -101,6 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       logout,
       updateNativeLanguage,
+      updateTargetLanguage,
       updateProfilePicture,
       removeProfilePicture,
     }}>

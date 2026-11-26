@@ -21,9 +21,11 @@ function isValidName(value: string) {
 export function RegisterPage() {
   const navigate = useNavigate()
   const [name, setName] = useState('')
+  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [nativeLanguageCode, setNativeLanguageCode] = useState('bn')
+  const [targetLanguageCode, setTargetLanguageCode] = useState('en')
   const [languages, setLanguages] = useState<Language[]>([])
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -37,15 +39,31 @@ export function RegisterPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const normalizedName = normalizeName(name)
+    const normalizedUsername = username.trim().toLowerCase()
     if (!isValidName(normalizedName)) {
       setError('Enter a valid name using letters, spaces, apostrophes, periods, or hyphens.')
+      return
+    }
+    if (!/^[a-z][a-z0-9_]{2,29}$/.test(normalizedUsername)) {
+      setError('Username must be 3–30 characters, start with a letter, and contain only English letters, numbers, or underscores.')
+      return
+    }
+    if (!targetLanguageCode || targetLanguageCode === nativeLanguageCode) {
+      setError('Choose a target language different from your native language.')
       return
     }
     setSubmitting(true)
     setError('')
     try {
-      await api.register(normalizedName, email, password, nativeLanguageCode)
-      navigate('/login', { replace: true })
+      const account = await api.register({
+        name: normalizedName,
+        username: normalizedUsername,
+        email: email.trim() || null,
+        password,
+        native_language_code: nativeLanguageCode,
+        target_language_code: targetLanguageCode,
+      })
+      navigate('/login', { replace: true, state: { registeredUsername: account.username } })
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Registration failed.')
     } finally { setSubmitting(false) }
@@ -54,21 +72,40 @@ export function RegisterPage() {
   return (
     <section className="form-card">
       <p className="eyebrow">Track your progress</p><h1>Create account</h1>
+      <p className="form-hint"><span className="required-mark" aria-hidden="true">*</span> Required fields</p>
       <form onSubmit={handleSubmit}>
-        <label>Name<input value={name} onChange={(event) => setName(event.target.value)} minLength={2} maxLength={100} autoComplete="name" required /></label>
-        <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" required /></label>
-        <label>Password<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={128} autoComplete="new-password" required /></label>
+        <label><span>Full name <span className="required-mark" aria-hidden="true">*</span></span><input value={name} onChange={(event) => setName(event.target.value)} minLength={2} maxLength={100} autoComplete="name" required /></label>
         <label>
-          Native language
-          <select value={nativeLanguageCode} onChange={(event) => setNativeLanguageCode(event.target.value)} required>
+          <span>Username <span className="required-mark" aria-hidden="true">*</span></span>
+          <input value={username} onChange={(event) => setUsername(event.target.value)} minLength={3} maxLength={30} autoComplete="username" autoCapitalize="none" spellCheck={false} aria-describedby="username-hint" required />
+        </label>
+        <p className="form-hint" id="username-hint">Use 3–30 English letters, numbers, or underscores. Start with a letter. Usernames are case-insensitive.</p>
+        <label>Email<input type="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={320} autoComplete="email" /></label>
+        <label><span>Password <span className="required-mark" aria-hidden="true">*</span></span><input type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} maxLength={128} autoComplete="new-password" required /></label>
+        <label>
+          <span>Native language <span className="required-mark" aria-hidden="true">*</span></span>
+          <select value={nativeLanguageCode} onChange={(event) => {
+            const code = event.target.value
+            setNativeLanguageCode(code)
+            if (targetLanguageCode === code) setTargetLanguageCode('')
+          }} required>
             {languages.map((language) => (
               <option value={language.code} key={language.code}>{language.name}</option>
             ))}
           </select>
         </label>
-        <p className="form-hint">This becomes the source language for your signed-in practice. You can change it later.</p>
+        <label>
+          <span>Target language <span className="required-mark" aria-hidden="true">*</span></span>
+          <select value={targetLanguageCode} onChange={(event) => setTargetLanguageCode(event.target.value)} required>
+            <option value="" disabled>Choose the language you want to learn</option>
+            {languages.filter((language) => language.code !== nativeLanguageCode).map((language) => (
+              <option value={language.code} key={language.code}>{language.name}</option>
+            ))}
+          </select>
+        </label>
+        <p className="form-hint">Practice opens directly in your chosen language pair. You can change these preferences in your dashboard.</p>
         {error && <p className="form-error">{error}</p>}
-        <button className="button" type="submit" disabled={submitting || languages.length === 0}>{submitting ? 'Creating account…' : 'Create account'}</button>
+        <button className="button" type="submit" disabled={submitting || languages.length < 2}>{submitting ? 'Creating account…' : 'Create account'}</button>
       </form>
       <p>Already registered? <Link to="/login">Log in</Link>.</p>
     </section>

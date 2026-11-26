@@ -11,16 +11,17 @@ export function ProfilePage() {
     accessToken,
     user,
     updateNativeLanguage,
+    updateTargetLanguage,
     updateProfilePicture,
     removeProfilePicture,
   } = useAuth()
   const [languages, setLanguages] = useState<Language[]>([])
-  const [languageCode, setLanguageCode] = useState('en')
   const [statistics, setStatistics] = useState<Statistics | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [pictureError, setPictureError] = useState('')
   const [updatingPicture, setUpdatingPicture] = useState(false)
+  const [updatingLanguages, setUpdatingLanguages] = useState(false)
 
   useEffect(() => {
     api.getLanguages().then(setLanguages).catch(() => undefined)
@@ -29,20 +30,18 @@ export function ProfilePage() {
   const targetLanguages = languages.filter(
     (language) => language.code !== user?.native_language.code,
   )
-  const selectedTargetCode = targetLanguages.some(
-    (language) => language.code === languageCode,
-  )
-    ? languageCode
-    : targetLanguages[0]?.code ?? ''
+  const selectedTargetCode = user?.target_language.code ?? ''
 
   useEffect(() => {
     if (!accessToken || !user || !selectedTargetCode) return
+    let cancelled = false
     api.getStatistics(user.native_language.code, selectedTargetCode, accessToken)
-      .then(setStatistics)
+      .then((response) => { if (!cancelled) setStatistics(response) })
       .catch((requestError: unknown) => {
-        setError(requestError instanceof Error ? requestError.message : 'Could not load statistics.')
+        if (!cancelled) setError(requestError instanceof Error ? requestError.message : 'Could not load statistics.')
       })
-      .finally(() => setLoading(false))
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
   }, [accessToken, selectedTargetCode, user])
 
   const selectedLanguage = languages.find((language) => language.code === selectedTargetCode)
@@ -72,20 +71,31 @@ export function ProfilePage() {
     ? Math.round((statistics.exercises_completed / totalExercises) * 100)
     : 0
 
-  function selectLanguage(code: string) {
+  async function selectLanguage(code: string) {
     setLoading(true)
     setError('')
-    setLanguageCode(code)
+    setUpdatingLanguages(true)
+    try {
+      await updateTargetLanguage(code)
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : 'Could not update target language.')
+      setLoading(false)
+    } finally {
+      setUpdatingLanguages(false)
+    }
   }
 
   async function selectNativeLanguage(code: string) {
     setLoading(true)
     setError('')
+    setUpdatingLanguages(true)
     try {
       await updateNativeLanguage(code)
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : 'Could not update native language.')
       setLoading(false)
+    } finally {
+      setUpdatingLanguages(false)
     }
   }
 
@@ -142,7 +152,7 @@ export function ProfilePage() {
           <span className="dashboard-language-route">
             {user?.native_language.name ?? 'Source'} <b aria-hidden="true">→</b>
           </span>
-          <select value={selectedTargetCode} onChange={(event) => selectLanguage(event.target.value)}>
+          <select value={selectedTargetCode} onChange={(event) => void selectLanguage(event.target.value)} disabled={updatingLanguages}>
             {targetLanguages.map((language) => (
               <option value={language.code} key={language.code}>{language.name}</option>
             ))}
@@ -284,8 +294,12 @@ export function ProfilePage() {
                 <dd>{user?.name ?? '—'}</dd>
               </div>
               <div className="info-item">
+                <dt>Username</dt>
+                <dd>{user?.username ?? '—'}</dd>
+              </div>
+              <div className="info-item">
                 <dt>Email</dt>
-                <dd>{user?.email ?? '—'}</dd>
+                <dd>{user?.email ?? 'Not provided'}</dd>
               </div>
               <div className="info-item">
                 <dt>Native language</dt>
@@ -293,16 +307,21 @@ export function ProfilePage() {
                   <select
                     value={user?.native_language.code ?? ''}
                     onChange={(event) => void selectNativeLanguage(event.target.value)}
-                    disabled={!user}
+                    disabled={!user || updatingLanguages}
                   >
                     {languages.map((language) => (
                       <option value={language.code} key={language.code}>{language.name}</option>
                     ))}
                   </select>
+                  <p className="form-hint">Choosing your target language here swaps your practice direction.</p>
                 </dd>
               </div>
+              <div className="info-item">
+                <dt>Target language</dt>
+                <dd>{user?.target_language.name ?? '—'} · Change using Practice direction above.</dd>
+              </div>
             </dl>
-            <Link className="profile-practice-link" to="/practice">
+            <Link className="profile-practice-link" to={user ? `/practice/${user.native_language.code}/${user.target_language.code}/exercises` : '/practice'}>
               Continue practising <span aria-hidden="true">→</span>
             </Link>
           </div>

@@ -40,7 +40,7 @@ async def get_current_user(
 
     user = await session.scalar(
         select(User)
-        .options(selectinload(User.native_language))
+        .options(selectinload(User.native_language), selectinload(User.target_language))
         .where(User.user_id == user_id)
     )
     if user is None or not user.is_active:
@@ -69,7 +69,7 @@ async def get_optional_current_user(
 
     user = await session.scalar(
         select(User)
-        .options(selectinload(User.native_language))
+        .options(selectinload(User.native_language), selectinload(User.target_language))
         .where(User.user_id == user_id)
     )
     if user is None or not user.is_active:

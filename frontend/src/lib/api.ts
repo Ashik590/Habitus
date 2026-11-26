@@ -1,4 +1,4 @@
-import type { AccessTokenResponse, CefrLevel, EvaluationResponse, Exercise, ExerciseListResponse, Language, Statistics, User } from '../types/api'
+import type { AccessTokenResponse, CefrLevel, EvaluationResponse, Exercise, ExerciseListResponse, Language, RegistrationRequest, Statistics, User } from '../types/api'
 
 // Keep the frontend and API on the same site in development so SameSite cookies work.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1'
@@ -104,19 +104,19 @@ export const api = {
     }
     return cachedLanguages
   },
-  register: (name: string, email: string, password: string, nativeLanguageCode: string) => request<User>('/auth/register', {
-    method: 'POST', body: JSON.stringify({ name, email, password, native_language_code: nativeLanguageCode }),
+  register: (registration: RegistrationRequest) => request<User>('/auth/register', {
+    method: 'POST', body: JSON.stringify(registration),
   }),
-  login: (email: string, password: string) => request<AccessTokenResponse>('/auth/login', {
-    method: 'POST', body: JSON.stringify({ email, password }),
+  login: (username: string, password: string) => request<AccessTokenResponse>('/auth/login', {
+    method: 'POST', body: JSON.stringify({ username, password }),
   }),
   refreshToken: () => request<AccessTokenResponse>('/auth/refresh', {
     method: 'POST',
   }),
   logout: () => request<void>('/auth/logout', { method: 'POST' }),
   getCurrentUser: (token: string) => request<User>('/users/me', {}, token),
-  updateNativeLanguage: (nativeLanguageCode: string, token: string) => request<User>('/users/me/native-language', {
-    method: 'PATCH', body: JSON.stringify({ native_language_code: nativeLanguageCode }),
+  updatePracticeLanguages: (nativeLanguageCode: string, targetLanguageCode: string, token: string) => request<User>('/users/me/practice-languages', {
+    method: 'PATCH', body: JSON.stringify({ native_language_code: nativeLanguageCode, target_language_code: targetLanguageCode }),
   }, token),
   uploadProfilePicture: (picture: File, token: string) => {
     const form = new FormData()

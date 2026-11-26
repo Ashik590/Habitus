@@ -30,5 +30,10 @@ class Language(Base):
         back_populates="target_language",
     )
     native_users: Mapped[list["User"]] = relationship(  # noqa: F821
-        back_populates="native_language"
+        foreign_keys="User.native_language_id",
+        back_populates="native_language",
+    )
+    target_users: Mapped[list["User"]] = relationship(  # noqa: F821
+        foreign_keys="User.target_language_id",
+        back_populates="target_language",
     )

@@ -49,10 +49,17 @@ async def register_user(
     registration: UserRegister,
     session: AsyncSession = Depends(get_database_session),
 ) -> User:
-    existing_user = await session.scalar(
-        select(User).where(User.email == registration.email)
+    existing_username = await session.scalar(
+        select(User.user_id).where(User.username == registration.username)
     )
-    if existing_user is not None:
+    if existing_username is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This username is already taken.",
+        )
+    if registration.email is not None and await session.scalar(
+        select(User.user_id).where(User.email == registration.email)
+    ) is not None:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="An account with this email already exists.",
@@ -70,11 +77,25 @@ async def register_user(
             detail="The selected native language is unavailable.",
         )
 
+    target_language = await session.scalar(
+        select(Language).where(
+            Language.code == registration.target_language_code,
+            Language.is_active.is_(True),
+        )
+    )
+    if target_language is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="The selected target language is unavailable.",
+        )
+
     user = User(
         name=registration.name,
+        username=registration.username,
         email=registration.email,
         password_hash=hash_password(registration.password),
         native_language_id=native_language.language_id,
+        target_language_id=target_language.language_id,
     )
     session.add(user)
 
@@ -84,10 +105,10 @@ async def register_user(
         await session.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="An account with this email already exists.",
+            detail="This username or email is already in use.",
         ) from exc
 
-    await session.refresh(user, ["native_language"])
+    await session.refresh(user, ["native_language", "target_language"])
     return user
 
 
@@ -98,7 +119,7 @@ async def login(
     session: AsyncSession = Depends(get_database_session),
 ) -> AccessTokenResponse:
     user = await session.scalar(
-        select(User).where(User.email == login_request.email)
+        select(User).where(User.username == login_request.username)
     )
     if user is None or not verify_password(
         login_request.password,
@@ -106,7 +127,7 @@ async def login(
     ):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password.",
+            detail="Invalid username or password.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { api } from '../lib/api'
 import type { Language } from '../types/api'
@@ -46,12 +46,13 @@ export function LanguagesPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    if (isInitializing || user) return
     api.getLanguages().then(setLanguages).catch((requestError: unknown) => {
       setError(requestError instanceof Error ? requestError.message : 'Could not load languages.')
     })
-  }, [])
+  }, [isInitializing, user])
 
-  const sourceCode = user?.native_language.code ?? guestSourceCode
+  const sourceCode = guestSourceCode
   const targetLanguages = useMemo(
     () => languages.filter((language) => language.code !== sourceCode),
     [languages, sourceCode],
@@ -59,6 +60,11 @@ export function LanguagesPage() {
   const selectedTargetCode = targetLanguages.some((language) => language.code === targetCode)
     ? targetCode
     : targetLanguages[0]?.code ?? ''
+
+  if (isInitializing) return <p className="status-message">Loading your practice preferences…</p>
+  if (user) {
+    return <Navigate to={`/practice/${user.native_language.code}/${user.target_language.code}/exercises`} replace />
+  }
 
   function beginPractice(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -81,30 +87,16 @@ export function LanguagesPage() {
 
       {languages.length > 0 && !isInitializing && (
         <form className="practice-setup-panel" onSubmit={beginPractice}>
-          {user ? (
-            <div className="native-language-context">
-              <span className="native-context-flag" aria-hidden="true">
-                {flags[user.native_language.code] ?? '🌐'}
-              </span>
-              <span>
-                Practising from <strong>{user.native_language.name}</strong>
-              </span>
-              <Link to="/profile">Change</Link>
-            </div>
-          ) : null}
+          <div className="practice-language-flow">
+            <LanguagePicker
+              eyebrow="Source language"
+              title="I already know"
+              value={guestSourceCode}
+              languages={languages}
+              onChange={setGuestSourceCode}
+            />
 
-          <div className={`practice-language-flow ${user ? 'authenticated' : ''}`}>
-            {!user && (
-              <LanguagePicker
-                eyebrow="Source language"
-                title="I already know"
-                value={guestSourceCode}
-                languages={languages}
-                onChange={setGuestSourceCode}
-              />
-            )}
-
-            {!user && <span className="language-flow-arrow" aria-hidden="true">→</span>}
+            <span className="language-flow-arrow" aria-hidden="true">→</span>
 
             <LanguagePicker
               eyebrow="Target language"

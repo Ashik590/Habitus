@@ -14,7 +14,7 @@ const languageNames: Record<string, string> = {
 
 export function ExercisesPage() {
   const { sourceCode = 'bn', targetCode = 'en' } = useParams()
-  const { accessToken, isInitializing } = useAuth()
+  const { accessToken, isInitializing, user } = useAuth()
   const [selectedLevel, setSelectedLevel] = useState<CefrLevel | 'All'>('All')
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [total, setTotal] = useState(0)
@@ -78,7 +78,9 @@ export function ExercisesPage() {
     <section>
       <div className="page-heading">
         <div>
-          <Link className="back-link" to="/practice">← Change languages</Link>
+          <Link className="back-link" to={user ? '/profile' : '/practice'}>
+            {user ? '← Language preferences' : '← Change languages'}
+          </Link>
           <p className="eyebrow page-kicker">{sourceLanguageName} → {targetLanguageName}</p>
           <h1>Exercises</h1>
           <p className="heading-copy">Select an exercise to test your spoken translation under calibrated time limits.</p>
