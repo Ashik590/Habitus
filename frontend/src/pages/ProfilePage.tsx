@@ -318,7 +318,10 @@ export function ProfilePage() {
               </div>
               <div className="info-item">
                 <dt>Target language</dt>
-                <dd>{user?.target_language.name ?? '—'} · Change using Practice direction above.</dd>
+                <dd>
+                  {user?.target_language.name ?? '—'}
+                  <p className="form-hint">Change using Practice direction above.</p>
+                </dd>
               </div>
             </dl>
             <Link className="profile-practice-link" to={user ? `/practice/${user.native_language.code}/${user.target_language.code}/exercises` : '/practice'}>
