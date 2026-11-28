@@ -3,6 +3,7 @@ import { Layout } from './components/Layout'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AboutPage } from './pages/AboutPage'
 import { ExercisePage } from './pages/ExercisePage'
+import { ExerciseResultPage } from './pages/ExerciseResultPage'
 import { ExercisesPage } from './pages/ExercisesPage'
 import { HomePage } from './pages/HomePage'
 import { LanguagesPage } from './pages/LanguagesPage'
@@ -23,6 +24,7 @@ export default function App() {
         <Route path="login" element={<LoginPage />} />
         <Route path="register" element={<RegisterPage />} />
         <Route element={<ProtectedRoute />}>
+          <Route path="practice/:sourceCode/:targetCode/exercises/:exerciseId/result" element={<ExerciseResultPage />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

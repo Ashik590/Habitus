@@ -158,10 +158,13 @@ export function ExercisesPage() {
               <>
                 <div className="modal-header">
                   <span className={`level-badge level-${pendingExercise.level.toLowerCase()}`}>{pendingExercise.level}</span>
-                  <p className="eyebrow">Timed Practice Session</p>
+                  <p className="eyebrow">{user && pendingExercise.completed ? 'Completed exercise' : 'Timed Practice Session'}</p>
                 </div>
                 <h2 id="modal-title" className="exercise-topic" lang={sourceCode}>#{pendingExercise.exercise_id} · {pendingExercise.title}</h2>
                 <div className="modal-body">
+                  {user && pendingExercise.completed && (
+                    <p>Your latest score is <strong>{pendingExercise.overall_score}%</strong>. Review your saved result or practise again. A new valid result replaces the previous one.</p>
+                  )}
                   <p>
                     Once you begin, the <strong>{pendingExercise.time_limit_seconds}-second countdown</strong> starts immediately.
                   </p>
@@ -173,12 +176,21 @@ export function ExercisesPage() {
                   <button className="button secondary" type="button" onClick={() => setPendingExercise(null)}>
                     Cancel
                   </button>
+                  {user && pendingExercise.completed && (
+                    <Link
+                      className="button"
+                      to={`/practice/${sourceCode}/${targetCode}/exercises/${pendingExercise.exercise_id}/result`}
+                      onClick={() => setPendingExercise(null)}
+                    >
+                      View result
+                    </Link>
+                  )}
                   <Link
-                    className="button"
+                    className={user && pendingExercise.completed ? 'button secondary' : 'button'}
                     to={`/practice/${sourceCode}/${targetCode}/exercises/${pendingExercise.exercise_id}`}
                     onClick={() => setPendingExercise(null)}
                   >
-                    I'm Ready · Start
+                    {user && pendingExercise.completed ? 'Practise again' : "I'm Ready · Start"}
                   </Link>
                 </div>
               </>

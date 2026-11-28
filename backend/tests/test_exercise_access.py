@@ -131,6 +131,28 @@ class ExerciseAccessTests(unittest.IsolatedAsyncioTestCase):
         save.assert_awaited_once()
         self.assertTrue(response.saved)
 
+    async def test_invalid_speech_does_not_replace_a_saved_result(self):
+        self.session.scalar.return_value = self.exercise(False)
+        invalid = self.evaluation.model_copy(update={"is_valid_response": False})
+        with (
+            patch.object(evaluations, "evaluate_audio", new_callable=AsyncMock, return_value=invalid),
+            patch.object(evaluations, "save_authenticated_result", new_callable=AsyncMock) as save,
+        ):
+            response = await self.submit(self.user)
+        save.assert_not_awaited()
+        self.assertFalse(response.saved)
+
+    async def test_provider_failure_does_not_replace_a_saved_result(self):
+        self.session.scalar.return_value = self.exercise(False)
+        with (
+            patch.object(evaluations, "evaluate_audio", new_callable=AsyncMock, side_effect=evaluations.EvaluationServiceError("Busy", status_code=503)),
+            patch.object(evaluations, "save_authenticated_result", new_callable=AsyncMock) as save,
+            self.assertRaises(HTTPException) as failure,
+        ):
+            await self.submit(self.user)
+        self.assertEqual(failure.exception.status_code, 503)
+        save.assert_not_awaited()
+
     async def test_inactive_or_missing_exercises_still_return_not_found(self):
         self.session.scalar.return_value = None
         with self.assertRaises(HTTPException) as detail_failure:

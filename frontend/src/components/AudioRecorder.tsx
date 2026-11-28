@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api, ApiError } from '../lib/api'
 import type { EvaluationResponse } from '../types/api'
 
@@ -454,6 +455,11 @@ export function AudioRecorder({
             <button className="button" type="button" onClick={handleReset}>
               Practice Again
             </button>
+            {result.saved && (
+              <Link className="button secondary" to={`/practice/${sourceCode}/${targetCode}/exercises/${exerciseId}/result`}>
+                View saved result
+              </Link>
+            )}
             <a className="button secondary" href={`/practice/${sourceCode}/${targetCode}/exercises`}>
               All Exercises
             </a>

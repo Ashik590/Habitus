@@ -1,4 +1,4 @@
-import type { AccessTokenResponse, CefrLevel, EvaluationResponse, Exercise, ExerciseListResponse, Language, RegistrationRequest, Statistics, User } from '../types/api'
+import type { AccessTokenResponse, CefrLevel, EvaluationResponse, Exercise, ExerciseListResponse, Language, RegistrationRequest, SavedEvaluation, Statistics, User } from '../types/api'
 
 // Keep the frontend and API on the same site in development so SameSite cookies work.
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000/api/v1'
@@ -149,6 +149,7 @@ export const api = {
     )
   },
   getExercise: (sourceCode: string, targetCode: string, id: string, token?: string | null) => request<Exercise>(`/practice/${sourceCode}/${targetCode}/exercises/${id}`, {}, token),
+  getSavedResult: (sourceCode: string, targetCode: string, id: string, token: string) => request<SavedEvaluation>(`/practice/${sourceCode}/${targetCode}/exercises/${id}/result`, {}, token),
   getStatistics: (sourceCode: string, targetCode: string, token: string) => request<Statistics>(`/users/me/practice/${sourceCode}/${targetCode}/statistics`, {}, token),
   evaluateExercise: (
     sourceCode: string,

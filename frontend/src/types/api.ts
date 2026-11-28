@@ -88,3 +88,20 @@ export interface EvaluationResponse {
   recommended_translations: string[]
   saved: boolean
 }
+
+export interface SavedEvaluation {
+  exercise_id: number
+  title: string
+  level: CefrLevel
+  source_text: string
+  time_limit_seconds: number
+  preferred_solutions: string[]
+  recognized_translation: string | null
+  feedback: string[] | null
+  completed_at: string | null
+  accuracy_score: number
+  grammar_score: number
+  naturalness_score: number
+  fluency_score: number
+  overall_score: number
+}

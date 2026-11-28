@@ -399,6 +399,13 @@ h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); }
 .overall-score.invalid strong, .overall-score.invalid > span { color: var(--danger); }
 .recognized-answer { display: flex; flex-direction: column; gap: 5px; margin-top: 14px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 12px; }
 .recognized-answer span { color: var(--muted); font-size: .78rem; font-weight: 750; text-transform: uppercase; letter-spacing: .08em; }
+.saved-result > h1 { margin: 6px 0 14px; font-size: clamp(1.65rem, 3vw, 2.1rem); line-height: 1.2; }
+.saved-result .recognized-answer strong { overflow-wrap: anywhere; white-space: pre-wrap; }
+.saved-result-source { gap: 10px; padding: 20px; }
+.saved-result-source strong { font-size: clamp(1.35rem, 2.5vw, 1.75rem); font-weight: 600; line-height: 1.65; }
+.saved-result-source strong:lang(bn) { font-family: var(--font-bengali); }
+.saved-result .recognized-answer .form-hint { margin: 0; }
+.saved-result .saved-result-note { margin-top: 20px; }
 .score-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 9px; margin: 14px 0; }
 .score-grid div { display: flex; flex-direction: column; gap: 4px; padding: 14px 8px; border: 1px solid var(--line); border-radius: 10px; text-align: center; }
 .score-grid span { color: var(--muted); font-size: .74rem; }

@@ -77,6 +77,23 @@ New SQL inserts must include `title`. Version 2 catalog exports preserve titles
 and require them on import. Version 1 exports remain supported, with neutral
 source-language placeholders for missing titles; curate those labels afterward.
 
+## Saved exercise results
+
+Signed-in learners can choose **View result** or **Practise again** for a
+completed exercise. Only the latest valid evaluation is retained for each user
+and exercise: its scores, recognized speech, feedback, and completion timestamp.
+Failed requests and invalid speech do not replace an existing result. Recordings
+are not stored. The review page reads preferred solutions from the exercise;
+generated recommendations and feedback-language metadata are not saved.
+
+Migration `a10c26d85e34` adds nullable `recognized_translation`, `feedback`, and
+timezone-aware `completed_at` fields to `user_exercises`. Existing scores are
+preserved; unavailable older details are labelled until a new valid attempt
+replaces them. Completion times are displayed in the viewer's local timezone.
+The authenticated `/api/v1/practice/{source}/{target}/exercises/{id}/result`
+endpoint returns only the current user's result, including results from earlier
+language preferences.
+
 ## Development
 
 Use Python 3.12, Node.js 24, and PostgreSQL. From the repository root:

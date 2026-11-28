@@ -1,6 +1,9 @@
+from datetime import datetime
 from typing import Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
+
+from app.schemas.exercise import CEFRLevel
 
 
 FeedbackLanguage = Literal["en", "bn"]
@@ -49,3 +52,20 @@ class EvaluationResponse(BaseModel):
     feedback: list[str]
     recommended_translations: list[str]
     saved: bool
+
+
+class SavedEvaluationResponse(BaseModel):
+    exercise_id: int
+    title: str
+    level: CEFRLevel
+    source_text: str
+    time_limit_seconds: int
+    preferred_solutions: list[str]
+    recognized_translation: str | None
+    feedback: list[str] | None
+    completed_at: datetime | None
+    accuracy_score: float
+    grammar_score: float
+    naturalness_score: float
+    fluency_score: float
+    overall_score: float

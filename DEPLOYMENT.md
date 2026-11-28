@@ -44,6 +44,14 @@ in a clean container yet. Resolve any installation/build failure before release.
 
 ## 3. Create the hosted schema and copy exercises
 
+Migration `a10c26d85e34` adds saved speech, feedback, and completion time to
+`user_exercises`, preserving older scores with unknown details left null. Apply
+it before using the updated evaluation and review endpoints. New valid attempts
+replace the previous saved result; no audio or attempt history is stored.
+Deploy the frontend and backend together. Verify that a signed-in learner can
+review a completed exercise, redo it, and see the updated result and timestamp.
+Check that another account cannot access that result.
+
 Migration `e8fa04b63c12` adds required exercise titles and gives existing rows
 neutral placeholders. Migration `f90b15c74d23` then limits titles to 30 characters and shortens three earlier
 Bangla labels. After applying both migrations, paste the full contents of

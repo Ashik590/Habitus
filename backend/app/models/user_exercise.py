@@ -1,7 +1,9 @@
+from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import BigInteger, CheckConstraint, ForeignKey, Numeric
+from sqlalchemy import BigInteger, CheckConstraint, DateTime, ForeignKey, Numeric, Text
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -47,6 +49,9 @@ class UserExercise(Base):
     naturalness_score: Mapped[Decimal] = mapped_column(Numeric(5, 2))
     fluency_score: Mapped[Decimal] = mapped_column(Numeric(5, 2))
     overall_score: Mapped[Decimal] = mapped_column(Numeric(5, 2))
+    recognized_translation: Mapped[str | None] = mapped_column(Text)
+    feedback: Mapped[list[str] | None] = mapped_column(ARRAY(Text))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     user: Mapped["User"] = relationship(  # noqa: F821
         back_populates="exercise_scores"

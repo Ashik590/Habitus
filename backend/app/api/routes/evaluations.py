@@ -2,12 +2,12 @@ from decimal import Decimal, ROUND_HALF_UP
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
-from app.api.dependencies.auth import get_optional_current_user
+from app.api.dependencies.auth import get_current_user, get_optional_current_user
 from app.db.session import get_database_session
 from app.api.routes.exercises import enforce_exercise_access, enforce_native_language, resolve_language_pair
 from app.models.exercise import Exercise
@@ -17,6 +17,7 @@ from app.schemas.evaluation import (
     EvaluationResponse,
     FeedbackLanguage,
     GeminiEvaluation,
+    SavedEvaluationResponse,
 )
 from app.services.gemini_evaluation import EvaluationServiceError, evaluate_audio
 
@@ -68,8 +69,12 @@ async def save_authenticated_result(
         "naturalness_score": evaluation.naturalness_score,
         "fluency_score": evaluation.fluency_score,
         "overall_score": overall_score,
+        "recognized_translation": evaluation.recognized_translation,
+        "feedback": evaluation.feedback,
+        # Use wall-clock time after evaluation, rather than transaction start.
+        "completed_at": func.clock_timestamp(),
     }
-    score_columns = {
+    result_columns = {
         key: value
         for key, value in values.items()
         if key not in {"user_id", "exercise_id"}
@@ -81,11 +86,52 @@ async def save_authenticated_result(
             UserExercise.user_id,
             UserExercise.exercise_id,
         ],
-        set_=score_columns,
+        set_=result_columns,
     )
     await session.execute(statement)
 
     await session.commit()
+
+
+@router.get("/{exercise_id}/result", response_model=SavedEvaluationResponse)
+async def get_saved_result(
+    source_code: str,
+    target_code: str,
+    exercise_id: int,
+    session: AsyncSession = Depends(get_database_session),
+    current_user: User = Depends(get_current_user),
+) -> SavedEvaluationResponse:
+    # Ownership is required even for public exercises. Changing language
+    # preferences must not make a learner's earlier results inaccessible.
+    row = (await session.execute(
+        select(UserExercise, Exercise)
+        .join(Exercise, Exercise.exercise_id == UserExercise.exercise_id)
+        .where(
+            UserExercise.user_id == current_user.user_id,
+            UserExercise.exercise_id == exercise_id,
+            Exercise.source_language.has(code=source_code),
+            Exercise.target_language.has(code=target_code),
+        )
+    )).one_or_none()
+    if row is None:
+        raise HTTPException(status_code=404, detail="No saved result found for this exercise.")
+    result, exercise = row
+    return SavedEvaluationResponse(
+        exercise_id=exercise.exercise_id,
+        title=exercise.title,
+        level=exercise.level,
+        source_text=exercise.source_text,
+        time_limit_seconds=exercise.time_limit_seconds,
+        preferred_solutions=exercise.preferred_solutions,
+        recognized_translation=result.recognized_translation,
+        feedback=result.feedback,
+        completed_at=result.completed_at,
+        accuracy_score=result.accuracy_score,
+        grammar_score=result.grammar_score,
+        naturalness_score=result.naturalness_score,
+        fluency_score=result.fluency_score,
+        overall_score=result.overall_score,
+    )
 
 
 @router.post("/{exercise_id}/evaluate", response_model=EvaluationResponse)
