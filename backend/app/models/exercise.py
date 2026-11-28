@@ -8,6 +8,7 @@ from sqlalchemy import (
     SmallInteger,
     String,
     Text,
+    UniqueConstraint,
     text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY
@@ -35,6 +36,11 @@ class Exercise(Base):
             "source_language_id <> target_language_id",
             name="ck_exercises_different_languages",
         ),
+        CheckConstraint("title ~ '[^[:space:]]'", name="ck_exercises_title_not_blank"),
+        UniqueConstraint(
+            "source_language_id", "target_language_id", "title",
+            name="uq_exercises_language_pair_title",
+        ),
         Index(
             "ix_exercises_language_pair_level",
             "source_language_id",
@@ -59,6 +65,7 @@ class Exercise(Base):
         index=True,
     )
     level: Mapped[str] = mapped_column(String(2))
+    title: Mapped[str] = mapped_column(String(30))
     source_text: Mapped[str] = mapped_column(Text)
     preferred_solutions: Mapped[list[str]] = mapped_column(ARRAY(Text))
     time_limit_seconds: Mapped[int]

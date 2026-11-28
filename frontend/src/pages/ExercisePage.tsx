@@ -76,6 +76,8 @@ export function ExercisePage() {
         </div>
       </div>
 
+      <p className="exercise-topic" lang={sourceCode}>#{exercise.exercise_id} · {exercise.title}</p>
+
       {!isFinished ? (
         <div className="active-prompt-area">
           <p className="eyebrow">Translate this sentence into spoken {targetLanguageName}</p>

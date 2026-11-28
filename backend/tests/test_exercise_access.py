@@ -34,7 +34,7 @@ class ExerciseAccessTests(unittest.IsolatedAsyncioTestCase):
     def exercise(self, is_public):
         return Exercise(
             exercise_id=10, source_language_id=1, target_language_id=2,
-            level="A1", source_text="PRIVATE_PROMPT_SENTINEL",
+            level="A1", title="স্কুলের দিন", source_text="PRIVATE_PROMPT_SENTINEL",
             preferred_solutions=["PRIVATE_SOLUTION_SENTINEL"],
             time_limit_seconds=10, is_public=is_public, is_active=True,
         )
@@ -63,6 +63,8 @@ class ExerciseAccessTests(unittest.IsolatedAsyncioTestCase):
                     )
                 self.assertEqual(response.total, 2)
                 self.assertFalse(response.items[0].is_locked)
+                self.assertEqual(response.items[0].title, "স্কুলের দিন")
+                self.assertEqual(response.items[1].title, "স্কুলের দিন")
                 self.assertEqual(response.items[1].is_locked, current_user is None)
                 payload = response.model_dump_json()
                 self.assertNotIn("PRIVATE_PROMPT_SENTINEL", payload)
@@ -74,6 +76,7 @@ class ExerciseAccessTests(unittest.IsolatedAsyncioTestCase):
         self.session.scalar.return_value = self.exercise(True)
         response = await self.detail()
         self.assertTrue(response.is_public)
+        self.assertEqual(response.title, "স্কুলের দিন")
         self.assertFalse(response.is_locked)
         self.assertEqual(response.source_text, "PRIVATE_PROMPT_SENTINEL")
 

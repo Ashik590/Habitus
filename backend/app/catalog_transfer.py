@@ -16,6 +16,17 @@ from app.models.exercise import Exercise
 from app.models.language import Language
 
 
+def catalog_exercise_title(data: dict, source_code: str, position: int, version: int) -> str:
+    title = data.get("title")
+    if title is None and version == 1:
+        # Compatibility labels must not expose the original sentence to guests.
+        prefix = {"bn": "অনুশীলন", "de": "Übung", "es": "Ejercicio"}.get(source_code, "Exercise")
+        title = f"{prefix} #{position}"
+    if not isinstance(title, str) or not title.strip() or len(title.strip()) > 30:
+        raise ValueError(f"Exercise {position} needs a non-empty title of at most 30 characters.")
+    return title.strip()
+
+
 async def transfer(args: argparse.Namespace) -> None:
     settings = Settings(_env_file=args.env_file)
     engine = create_async_engine(settings.database_url)
@@ -27,7 +38,7 @@ async def transfer(args: argparse.Namespace) -> None:
                 codes = {language.language_id: language.code for language in languages}
                 exercises = (await session.scalars(select(Exercise))).all()
                 payload = {
-                    "version": 1,
+                    "version": 2,
                     "languages": [
                         {
                             "code": language.code,
@@ -42,6 +53,7 @@ async def transfer(args: argparse.Namespace) -> None:
                             "source_code": codes[exercise.source_language_id],
                             "target_code": codes[exercise.target_language_id],
                             "level": exercise.level,
+                            "title": exercise.title,
                             "source_text": exercise.source_text,
                             "preferred_solutions": exercise.preferred_solutions,
                             "time_limit_seconds": exercise.time_limit_seconds,
@@ -58,7 +70,8 @@ async def transfer(args: argparse.Namespace) -> None:
                 return
 
             payload = json.loads(Path(args.file).read_text(encoding="utf-8"))
-            if payload.get("version") != 1:
+            version = payload.get("version")
+            if version not in (1, 2):
                 raise ValueError("Unsupported catalog version.")
             if await session.scalar(select(func.count()).select_from(Exercise)):
                 raise ValueError("Import requires an empty exercise table; no data was changed.")
@@ -79,10 +92,11 @@ async def transfer(args: argparse.Namespace) -> None:
                     session.add(language)
                     existing[language.code] = language
             await session.flush()
-            for data in payload["exercises"]:
+            for position, data in enumerate(payload["exercises"], start=1):
                 values = dict(data)
                 source_code = values.pop("source_code")
                 target_code = values.pop("target_code")
+                values["title"] = catalog_exercise_title(data, source_code, position, version)
                 # Older exports lack access flags; keep those exercises locked.
                 values.setdefault("is_public", False)
                 session.add(Exercise(

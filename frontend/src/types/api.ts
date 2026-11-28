@@ -33,6 +33,7 @@ export interface AccessTokenResponse {
 
 export interface ExerciseSummary {
   exercise_id: number
+  title: string
   level: CefrLevel
   time_limit_seconds: number
   is_public: boolean

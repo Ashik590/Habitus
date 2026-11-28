@@ -57,6 +57,26 @@ UPDATE public.exercises SET is_public = true WHERE exercise_id = 42;
 -- Use false instead of true to require login again.
 ```
 
+## Exercise titles
+
+Exercises have a required, non-empty `title` of at most 30 characters, written
+in the source language. Aim for two or three words. Titles must be distinct
+within a source/target language pair. The list, session confirmation, and exercise page display the title; IDs
+continue to identify exercises and their saved scores.
+
+Migration `e8fa04b63c12` adds the column and assigns neutral placeholders to
+existing rows without exposing prompt excerpts. Migration `f90b15c74d23` reduces
+the limit to 30 characters and shortens three earlier Bangla labels. After
+applying both migrations, manually run
+[backend/sql/update_exercise_titles.sql](backend/sql/update_exercise_titles.sql)
+in Supabase SQL Editor to apply the approved 122 Bangla titles. The script stops
+if the exercise IDs, language pair, or source text no longer match the supplied
+CSV. It updates titles only and can be rerun against the same catalog.
+
+New SQL inserts must include `title`. Version 2 catalog exports preserve titles
+and require them on import. Version 1 exports remain supported, with neutral
+source-language placeholders for missing titles; curate those labels afterward.
+
 ## Development
 
 Use Python 3.12, Node.js 24, and PostgreSQL. From the repository root:

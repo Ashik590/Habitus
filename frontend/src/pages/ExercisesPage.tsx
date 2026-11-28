@@ -107,11 +107,11 @@ export function ExercisesPage() {
               key={exercise.exercise_id}
               type="button"
               onClick={() => setPendingExercise(exercise)}
-              aria-label={isLocked ? `Exercise #${exercise.exercise_id}, ${exercise.level}, sign in required` : undefined}
+              aria-label={isLocked ? `Exercise #${exercise.exercise_id}: ${exercise.title}, ${exercise.level}, sign in required` : undefined}
             >
               <span className={`level-badge level-${exercise.level.toLowerCase()}`}>{exercise.level}</span>
               <span className="exercise-title">
-                <span className="exercise-name">Exercise #{exercise.exercise_id}</span>
+                <span className="exercise-name" lang={sourceCode}>#{exercise.exercise_id} · {exercise.title}</span>
                 <small>{exercise.time_limit_seconds}s limit</small>
               </span>
               {user && (exercise.completed ? (
@@ -160,7 +160,7 @@ export function ExercisesPage() {
                   <span className={`level-badge level-${pendingExercise.level.toLowerCase()}`}>{pendingExercise.level}</span>
                   <p className="eyebrow">Timed Practice Session</p>
                 </div>
-                <h2 id="modal-title">Exercise #{pendingExercise.exercise_id}</h2>
+                <h2 id="modal-title" className="exercise-topic" lang={sourceCode}>#{pendingExercise.exercise_id} · {pendingExercise.title}</h2>
                 <div className="modal-body">
                   <p>
                     Once you begin, the <strong>{pendingExercise.time_limit_seconds}-second countdown</strong> starts immediately.

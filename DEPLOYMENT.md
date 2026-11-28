@@ -44,6 +44,15 @@ in a clean container yet. Resolve any installation/build failure before release.
 
 ## 3. Create the hosted schema and copy exercises
 
+Migration `e8fa04b63c12` adds required exercise titles and gives existing rows
+neutral placeholders. Migration `f90b15c74d23` then limits titles to 30 characters and shortens three earlier
+Bangla labels. After applying both migrations, paste the full contents of
+`backend/sql/update_exercise_titles.sql` into Supabase SQL Editor to apply the
+122 approved Bangla titles. This is a separate manual data update; Docker startup
+does not run that SQL file. It checks the supplied catalog before updating and
+preserves prompts, solutions, access flags, accounts, and scores. Deploy the
+frontend and backend together so both use the new title field.
+
 Migration `d7e9f3a52b01` adds `exercises.is_public`, locked by default, and exposes
 two existing active samples per CEFR level and language pair. It does not delete
 users, scores, or exercises. Review the public selections in Supabase after the

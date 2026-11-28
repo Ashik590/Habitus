@@ -114,6 +114,7 @@ async def list_exercises(
         items=[
             ExerciseSummary(
                 exercise_id=exercise.exercise_id,
+                title=exercise.title,
                 level=exercise.level,
                 time_limit_seconds=exercise.time_limit_seconds,
                 is_public=exercise.is_public,
@@ -169,6 +170,7 @@ async def get_exercise(
 
     return ExercisePublic(
         exercise_id=exercise.exercise_id,
+        title=exercise.title,
         level=exercise.level,
         source_text=exercise.source_text,
         time_limit_seconds=exercise.time_limit_seconds,
