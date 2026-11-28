@@ -66,8 +66,8 @@ h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); }
   top: 0;
   z-index: 10;
 }
-.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--rose); font-family: var(--font-serif); font-size: 1.4rem; font-weight: 650; text-decoration: none; letter-spacing: -.02em; padding: 6px 12px; margin-left: -12px; border-radius: 10px; transition: background .15s ease; }
-.brand:hover { background: var(--rose-soft); }
+.brand { display: inline-flex; align-items: center; gap: 10px; color: var(--rose); font-family: var(--font-serif); font-size: 1.4rem; font-weight: 650; text-decoration: none; letter-spacing: -.02em; padding: 6px 12px; margin-left: -12px; border-radius: 10px; transition: color .18s ease; }
+.brand:hover { color: var(--rose-deep); }
 .brand-logo { display: block; width: 32px; height: 32px; flex-shrink: 0; }
 .site-nav { display: flex; align-items: center; gap: 8px; }
 .nav-item { display: inline-flex; align-items: center; justify-content: center; padding: 9px 16px; border-radius: 9px; color: var(--muted); text-decoration: none; font-weight: 600; font-size: 0.92rem; background: transparent; border: 1px solid transparent; cursor: pointer; transition: all .15s ease; line-height: 1.2; font-family: var(--font-sans); }
